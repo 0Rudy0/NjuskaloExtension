@@ -7,3 +7,4 @@
 - oznaka novog oglasa (malo tamnije zuto od vau-vau npr)
 - fix brisanje povijesti gumbi
 - popup info onload na 2-3 sec - broj novih auti, broj oglasa koji su danas promijenili cijenu
+- brojka povijesti cijena umjesto ikone (gumb koji prikazuje graf)
