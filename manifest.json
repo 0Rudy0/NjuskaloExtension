@@ -1,16 +1,45 @@
 ﻿{
     "manifest_version": 2,
 
-    "name": "Getting started example",
-    "description": "This extension shows a Google Image search result for the current page",
-    "version": "1.0",
+    "name": "Njuskalo extension",
+    "description": "Formated mileage for each car (thousand separator). Added calculated horpse powers based on kWh value. Fetched some extra info for each add (auti: Motor, Mjenjac, Vlasnik, trgovina/osoba; Kuce: Broj soba, godina izgradnje). Price tracking for each add -> if there is price history for specific add, a green button appears under star icon that shows price history in the textual form as well as in graph. Added date of when the advert has appeared on the list (also calculation of days passed since that date)",
+    "version": "1.0.0",
 
     "browser_action": {
-        "default_icon": "icons/icon.png",
-        "default_popup": "popup.html"
+        "default_icon": "icons/njuskalo-0.png"
+        //"default_popup": "popup.html"
     },
     "permissions": [
         "activeTab",
         "https://ajax.googleapis.com/"
+    ],
+    "background": {
+        "scripts": [ "js/DAL.js" ]
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "http://www.njuskalo.hr/auti*",
+                "http://www.njuskalo.hr/karambolirani-auti*",
+                "http://www.njuskalo.hr/prodaja-kuca*",
+                "http://www.njuskalo.hr/prodaja-stanova*",
+                "http://www.njuskalo.hr/nekretnine*",
+                "http://www.njuskalo.hr/novogradnja*",
+                "http://www.njuskalo.hr/?ctl=browse_ads&sort=new&categoryId=9580*",
+                "http://www.njuskalo.hr/?ctl=browse_ads&sort=new&categoryId=9579*"
+            ],
+            "css": [
+                "css/morris.css",
+                "css/prettify.min.css",
+                "css/Njuskalo.css"
+            ],
+            "js": [
+                "js/jquery.min.js",
+                "js/raphael-min.js",
+                "js/morris.min.js",
+                "js/prettify.min.js",
+                "js/Njuskalo.js"
+            ]
+        }
     ]
 }

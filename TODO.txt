@@ -1,0 +1,9 @@
+﻿- DAL implementacija
+- popup s ukljucivanjem / iskljucivanjem featurea (auto pager recimo)
+- album slika u modalni dialog
+- tekstualni opis u modalni dijalog
+- boje crta na grafu (zeleno je minus, crveno je plus)
+- boje promjena cijena (isto kao gore)
+- oznaka novog oglasa (malo tamnije zuto od vau-vau npr)
+- fix brisanje povijesti gumbi
+- popup info onload na 2-3 sec - broj novih auti, broj oglasa koji su danas promijenili cijenu
