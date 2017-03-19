@@ -1,10 +1,14 @@
 ﻿{
     "manifest_version": 2,
 
-    "name": "Njuskalo extension",
+    "name": "Njuskalo enhancer",
     "description": "Formated mileage for each car (thousand separator). Added calculated horpse powers based on kWh value. Fetched some extra info for each add (auti: Motor, Mjenjac, Vlasnik, trgovina/osoba; Kuce: Broj soba, godina izgradnje). Price tracking for each add -> if there is price history for specific add, a green button appears under star icon that shows price history in the textual form as well as in graph. Added date of when the advert has appeared on the list (also calculation of days passed since that date)",
     "version": "1.0.0",
-
+    "icons": {
+        "16": "icons/njuskalo-0.png",
+        "48": "icons/njuskalo-0.png",
+        "128": "icons/njuskalo-0.png"
+    },
     "browser_action": {
         "default_icon": "icons/njuskalo-0.png"
         //"default_popup": "popup.html"
@@ -13,9 +17,10 @@
         "activeTab",
         "https://ajax.googleapis.com/"
     ],
-    "background": {
-        "scripts": [ "js/DAL.js" ]
-    },
+    //"background": {
+    //    "scripts": [ "js/DAL.js" ],
+    //    "persistent": false
+    //},
     "content_scripts": [
         {
             "matches": [

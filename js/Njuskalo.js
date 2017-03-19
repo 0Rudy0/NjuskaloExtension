@@ -275,7 +275,7 @@ function fixLayoutList() {
 	//$('.FlexEmbed').hide();
 	setTimeout(function () {
 		$('body').scrollTop(150);
-	}, 400);
+	}, 500);
 }
 
 function getEntityElements() {
