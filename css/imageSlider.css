@@ -47,7 +47,7 @@
 
 #jssor_1 img {
 	width: auto !important;
-	height: auto !important;
+	height: 100% !important;
 	max-height: 100% !important;
 	max-width: 100% !important;
 	/*position: relative !important;
@@ -59,6 +59,12 @@
 	position: relative !important;
 	top: auto !important;
 	left: auto !important;
+}
+
+#jssor_1 img[data-u="thumb"] {
+	height: auto !important;
+	top: 16px !important;
+
 }
 
 #jssor_1 img:nth-child(3) {
@@ -88,6 +94,10 @@
 	/*bottom: 0px !important;*/
 	/*width: 100% !important;*/
 	height: 100px !important;
+}
+
+#thumbNavigator>div div.jssort01 div:nth-child(2)>div {
+	/*height: 45px !important;*/
 }
 
 /*#thumbNavigator>div{

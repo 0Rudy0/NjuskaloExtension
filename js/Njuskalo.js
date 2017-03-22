@@ -70,45 +70,36 @@ var usingDAL = false;
 			setAdditionalInfo($(value));
 			insertChart($(value));
 			if (index == items.length - 1) {
-				$.get(chrome.extension.getURL('html/modalImages.html'))
-					.done(function (data) {
-						$('body').append(data);
 
-						//document.getElementById("img1").src = "http://www.njuskalo.hr/image-bigger/auti/peugeot-508-1.6-hdi-navi-led-park-senz-temp-bluetooth-model-slika-80690085.jpg";
-						//document.getElementById("img2").src = "http://www.njuskalo.hr/image-80x60/auti/peugeot-508-1.6-hdi-navi-led-park-senz-temp-bluetooth-model-slika-80690085.jpg";
-						//$('#img1').src = chrome.extension.getURL("/img/01.jpg");
-						//$('#img2').src = chrome.extension.getURL("/img/thumb-01.jpg");
-					});
 			}
 		});
 		addRemoveButtons();
 		$('.EntityList-item a').click(function (e) {
 			e.preventDefault();
 			var imgs = allImages[this.href.substring(this.href.lastIndexOf('-') + 1)];
-			$('#jssor_1').html('<div id="closeBtnHolder"><button id="closeBtn">CLOSE</button></div><div data-u="loading" style="position:absolute;top:0px;left:0px;background-color:rgba(0,0,0,0.7);"><div style="filter: alpha(opacity=70); opacity: 0.7; position: absolute; display: block; top: 0px; left: 0px; width: 100%; height: 100%;"></div><div style="position:absolute;display:block;top:0px;left:0px;width:100%;height:100%;"></div></div><div data-u="slides" id="slidesHolder"></div><div data-u="thumbnavigator" id="thumbNavigator" class="jssort01" style="position:absolute;left:0px;bottom:0px;width:800px;height:100px;" data-autocenter="1"><div data-u="slides" style="cursor: default;"><div data-u="prototype" class="p"><div class="w"><div data-u="thumbnailtemplate" class="t"></div></div><div class="c"></div></div></div></div><span data-u="arrowleft" class="jssora05l" style="top:158px;left:8px;width:40px;height:40px;"></span><span data-u="arrowright" class="jssora05r" style="top:158px;right:8px;width:40px;height:40px;"></span>');
-			var html = '';
-			for (var i = 0; i < imgs.imgs.length; i++) {
 
-				html += '<div><span class="helper"></span>' +
-					'<img data-u="image" src="' + imgs.imgs[i] + '" />' +
-					'<img data-u="thumb" src="' + imgs.thumbs[i] + '" />' +
-					'</div>';
-			}
-			$('#slidesHolder').html(html);
+			$.get(chrome.extension.getURL('html/modalImages.html'))
+					.done(function (data) {
+						$('body').append(data);
+						var html = '';
+						for (var i = 0; i < imgs.imgs.length; i++) {
 
-			$('#closeBtn').click(function () {
-				$('#jssor_1').hide();
-				$('#jssor_1').attr('jssor-slider', 'false');
-			});
-			if (false) {
-				$('#jssor_1').show();
-			}
-			else {
-				setTimeout(function () {
-					jsorSlider = new $JssorSlider$("jssor_1", jssor_1_options);
-					$('#jssor_1').show();
-				}, 1000);
-			}
+							html += '<div><span class="helper"></span>' +
+								'<img data-u="image" src="' + imgs.imgs[i] + '" />' +
+								'<img data-u="thumb" src="' + imgs.thumbs[i] + '" />' +
+								'</div>';
+						}
+						$('#slidesHolder').html(html);
+
+						$('#closeBtn').click(function () {
+							$("#jssor_1").remove();
+						});
+
+						$JssorSlider$("jssor_1", jssor_1_options);
+						//setTimeout(function () {
+						//}, 100);
+					});
+
 		});
 	}
 })();

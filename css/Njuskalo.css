@@ -139,7 +139,8 @@ div.entity-thumbnail a img {
 }
 
 .EntityList-item a.link img:hover{
-	transform: translateX(-2px) translateY(-2px);
+	/*transform: translateX(-2px) translateY(-2px);*/
+	transform: scale(1.05);
 	box-shadow: 2px 2px 2px rgb(128, 128, 128);
 	transition-duration: 0.1s;
 }
