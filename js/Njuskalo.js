@@ -98,6 +98,7 @@ var usingDAL = false;
 
 			$('#closeBtn').click(function () {
 				$('#jssor_1').hide();
+				$('#jssor_1').attr('jssor-slider', 'false');
 			});
 			if (false) {
 				$('#jssor_1').show();
