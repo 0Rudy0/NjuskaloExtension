@@ -60,14 +60,19 @@
 }
 
 .removeHistory {
-	padding: 5px;
-	margin-bottom: 5px;
-	width: 100%;
-	background-image: none;
-	background-color: none;
-	color: black;
-	text-shadow: none;
+	padding: 5px !important;
+	margin-bottom: 5px !important;
+	width: 100% !important;
+	background-image: none !important;
+	background-color: transparent;
+	background: transparent !important;
+	color: black !important;
+	text-shadow: none !important;
 }
+
+	.removeHistory:hover {
+		background-color: #d9d9d9 !important;
+	}
 
 .entity-prices ul.price-items li span {
 	font-family: Consolas;
@@ -127,4 +132,14 @@ div.entity-thumbnail a img {
 
 .EntityList-item:not(.js-EntityList-item) {
 	display: none;
+}
+
+.wrap-form-aux-data {
+	display: block !important;
+}
+
+.EntityList-item a.link img:hover{
+	transform: translateX(-2px) translateY(-2px);
+	box-shadow: 2px 2px 2px rgb(128, 128, 128);
+	transition-duration: 0.1s;
 }

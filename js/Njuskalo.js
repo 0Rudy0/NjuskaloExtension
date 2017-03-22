@@ -1,194 +1,114 @@
-// ==UserScript==
-// @name        NJUSKALO
-// @namespace   http://tampermonkey.net/
-// @version     0.9.9
-// @description 1 - Fixed layout (increased page width, removed "njuskalo trgovine", banners in the middle of the list, duplicate adds ("istaknuti" + once more in the regular list), auto expand filter)
-// @description 1.1 - Formated mileage for each car (thousand separator)
-// @description 1.2 - Added calculated horpse powers based on kWh value
-// @description	2 - Fetched some extra info for each add (auti: Motor, Mjenjac, Vlasnik, trgovina/osoba; Kuce: Broj soba, godina izgradnje)
-// @description 3 - Price tracking for each add -> if there is price history for specific add, a green button appears under star icon that shows price history in the textual form as well as in graph
-// @description 4 - Added date of when the advert has appeared on the list (also calculation of days passed since that date)
-// @author      0Rudy0
-// @match		http://www.njuskalo.hr/auti*
-// @match       http://www.njuskalo.hr/prodaja-kuca*
-// @match       http://www.njuskalo.hr/prodaja-stanova*
-// @match       http://www.njuskalo.hr/nekretnine*
-// @match       http://www.njuskalo.hr/novogradnja*
-// @match       http://www.njuskalo.hr/?ctl=browse_ads&sort=new&categoryId=9580*
-// @match       http://www.njuskalo.hr/?ctl=browse_ads&sort=new&categoryId=9579*
-// @require     http://cdnjs.cloudflare.com/ajax/libs/raphael/2.1.2/raphael-min.js
-// @require     http://cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.min.js
-// @require     http://cdnjs.cloudflare.com/ajax/libs/prettify/r224/prettify.min.js
-// @resource    cloudflare http://cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.css
-// @resource    prettify http://cdnjs.cloudflare.com/ajax/libs/prettify/r224/prettify.min.css
-// @grant       GM_addStyle
-// @grant       GM_getResourceText
-// @grant       GM_getResourceURL
+var allImages = {};
 
-// ==/UserScript==
+var messages = {
+	insertNewPrice: 'insertNewPrice',
+	getPriceHistory: 'getPriceHistory',
+	createTables: 'createTables',
+	deleteTables: 'deleteTables',
+	deleteOldAds: 'deleteOldAds',
+	getNumOfOldAds: 'getNumOfOldAds',
+	getNumOfAllAds: 'getNumOfAllAds',
+	insertAdvertsBulk: 'insertAdvertsBulk',
+	insertAdvertPricesBulk: 'insertAdvertPricesBulk'
+}
 
-var dbase = (function () {
-	var self = this;
-	var db = openDatabase('Njuskalo', '1.0', 'Njuskalo pracenje cijena oglasa', 2 * 1024 * 1024);
-
-	var insertNewPrice = function (advertId, priceHRK, priceEUR) {
-		db.transaction(function (tx) {
-			tx.executeSql('SELECT * FROM Advert where advertId = ?', [advertId], function (tx, results) {
-				if (results.rows.length == 0) {
-					insertNewAdvert(tx, advertId, priceHRK, priceEUR);
-				}
-				else {
-					updateDateLastViewed(tx, advertId);
-					tx.executeSql('SELECT date, priceHRK, priceEUR FROM PriceHistory where advertId = ? ORDER BY date DESC', [advertId], function (tx, historyResults) {
-						if (historyResults.rows.length == 0) {
-							//ako ne postoji ni jedan entry u priceHistory tablici, jednostavno unesi novi redak
-							tx.executeSql('INSERT INTO PriceHistory VALUES (?, ?, ?, DATE("now"))', [advertId, priceHRK, priceEUR]);
-						}
-						else {
-							//u suprotnom, unesi novi redak samo ako na datum zadnjeg unosa u bazi ne postoji zapis s istom cijenom koja je trenutno
-							var foundSamePrice = false;
-							var lastDate = historyResults.rows[0].date;
-							for (var i = 0; i < historyResults.rows.length; i++) {
-								if (historyResults.rows[i].date == lastDate && (historyResults.rows[i].priceHRK == priceHRK || historyResults.rows[i].priceEUR == priceEUR)) {
-									foundSamePrice = true;
-									break;
-								}
-							}
-							if (!foundSamePrice) {
-								tx.executeSql('INSERT INTO PriceHistory VALUES (?, ?, ?, DATE("now"))', [advertId, priceHRK, priceEUR]);
-							}
-						}
-					});
-				}
-			});
-		});
-	}
-
-	var updateDateLastViewed = function (tx, advertId) {
-		tx.executeSql("UPDATE Advert SET dateLastViewed = DATE('now') where advertId = ?", [advertId]);
-	}
-
-	var insertNewAdvert = function (tx, advertId, priceHRK, priceEUR) {
-		tx.executeSql('INSERT INTO Advert (advertId,dateLastViewed,dateFirstViewed) VALUES (?, Date("now"), Date("now"))', [advertId],
-			null, function () {
-				//ako se dogodila greška, ne postoji kolona "dateFirstViewed" pa ju prvo dodaj nakon cega ponovi naredbu te updateataj tu kolonu za sve oglase
-				tx.executeSql('ALTER TABLE Advert ADD dateFirstViewed VARCHAR(15)', [], function () {
-					tx.executeSql('INSERT INTO Advert (advertId,dateLastViewed,dateFirstViewed) VALUES (?, Date("now"), Date("now"))', [advertId], function () {
-						tx.executeSql('UPDATE Advert set dateFirstViewed = dateLastViewed');
-					});
-				}, null);
-			});
-		tx.executeSql('INSERT INTO PriceHistory VALUES (?, ?, ?, Date("now"))', [advertId, priceHRK, priceEUR]);
-	}
-
-	var getPriceHistory = function (advertId, domItem) {
-		db.transaction(function (tx) {
-			domItem.currID = advertId;
-			tx.executeSql('SELECT a.advertId, a.dateFirstViewed, p.priceHRK, p.priceEUR, p.date FROM Advert a JOIN PriceHistory p on a.advertId = p.advertId where a.advertId = ? ORDER BY date ASC', [advertId], onGetHistory.bind(domItem));
-		});
-	}
-
-	var createTables = function () {
-		db.transaction(function (tx) {
-			tx.executeSql('CREATE TABLE IF NOT EXISTS Advert (' +
-				'advertId integer unique primary key,' +
-				'dateLastViewed VARCHAR(80))'
-				);
-		});
-		db.transaction(function (tx) {
-			tx.executeSql('CREATE TABLE IF NOT EXISTS PriceHistory (' +
-				'advertId integer,' +
-				'priceHRK integer,' +
-				'priceEUR integer,' +
-				'date VARCHAR(15),' +
-				'FOREIGN KEY (advertId) REFERENCES Advert (advertId))'
-				);
-		});
-	}
-
-	var deleteTables = function () {
-		db.transaction(function (tx) {
-			tx.executeSql('DROP TABLE Advert');
-		});
-		db.transaction(function (tx) {
-			tx.executeSql('DROP TABLE PriceHistory');
-		});
-	}
-
-	var deleteOldAds = function (numOfMonthsOld) {
-		var numOfMonthsString = '-' + numOfMonthsOld + ' month';
-		db.transaction(function (tx) {
-			tx.executeSql("select * from advert where dateLastViewed < date('now', ?)",
-				[numOfMonthsString],
-				function (tx, results) {
-					for (var i = 0; i < results.rows.length; i++) {
-						tx.executeSql("delete from advert where advertId = ?", [results.rows[i].advertId]);
-						tx.executeSql("delete from PriceHistory where advertId = ?", [results.rows[i].advertId]);
-					}
-				});
-		});
-	}
-
-	var getNumOfOldAds = function (numOfMonthsOld, elementId, prefixString) {
-		var numOfMonthsString = '-' + numOfMonthsOld + ' month';
-		db.transaction(function (tx) {
-			tx.executeSql("select * from advert where dateLastViewed < date('now', ?)",
-				[numOfMonthsString],
-				function (tx, results) {
-					$(elementId).html(prefixString + ' ' + results.rows.length);
-					$('#removeHolder').show();
-				},
-			function (e) {
-				console.log("error");
-			}
-			);
-		});
-	}
-
-	var getNumOfAllAds = function (elementId, prefixString) {
-		db.transaction(function (tx) {
-			tx.executeSql("select count(*) as count from advert", [], function (tx, results) {
-				$(elementId).html(prefixString + ' (' + results.rows[0].count + ')');
-			});
-		});
-	}
-
-	return {
-		insertNewPrice: insertNewPrice,		
-		getPriceHistory: getPriceHistory,
-		createTables: createTables,
-		deleteTables: deleteTables,
-		deleteOldAds: deleteOldAds,
-		getNumOfOldAds: getNumOfOldAds,
-		getNumOfAllAds: getNumOfAllAds
-	};
-})();
+var msgPort;
+var transferDataToBckgScript = false;
+var recreateTables = false;
+var usingDAL = false;
 
 (function () {
-	'use strict';
-	//document.head.appendChild(cssElement(GM_getResourceURL("cloudflare")));
-	//document.head.appendChild(cssElement(GM_getResourceURL("prettify")));
 
-	dbase.createTables();
-	fixDefaultLayout();
+	if (usingDAL) {
+		msgPort = chrome.runtime.connect({ name: 'DAL' });
+		msgPort.onMessage.addListener(function (msg) {
+			if (msg.cmd == 'onGetHistory') {
+				msg.data.results.rows.length = msg.data.results.length;
+				onGetHistory.apply(msg.data.domItem, [null, msg.data.results]);
+			}
+		});
+		if (transferDataToBckgScript) {
+			dbase.getAllAdverts();
+			dbase.getAllAdvertPrices();
+		}
+		if (recreateTables) {
+			msgPort.postMessage({ cmd: messages.deleteTables });
+		}
+	}
 	if ($('.EntityListFilter.block-standard').length == 0) {
 		formatMileageAddHP();
 		var itemId = window.location.href.substring(window.location.href.lastIndexOf('-') + 1);
-		
+
 		var prices = getPrices($('body')[0]);
-		dbase.insertNewPrice(itemId, prices.priceHRK, prices.priceEUR);
-		dbase.getPriceHistory(itemId, { details: true });
+		if (usingDAL) {
+			msgPort.postMessage({
+				cmd: messages.insertNewPrice,
+				data: {
+					itemId: itemId,
+					priceHRK: prices.priceHRK,
+					priceEUR: prices.priceEUR
+				}
+			});
+			msgPort.postMessage({
+				cmd: messages.getPriceHistory,
+				data: { itemId: itemId, domItem: { details: true } }
+			})
+		}
+		else {
+			dbase.insertNewPrice(itemId, prices.priceHRK, prices.priceEUR);
+			dbase.getPriceHistory(itemId, { details: true });
+		}
+
 		scrollonImageClick();
 	}
 	else {
-		fixLayoutList();
+		//fixLayoutList();
+		//return;
 		var items = getEntityElements();
 		$.each(items, function (index, value) {
 			formatMileageList($(value));
 			setAdditionalInfo($(value));
 			insertChart($(value));
+			if (index == items.length - 1) {
+				$.get(chrome.extension.getURL('html/modalImages.html'))
+					.done(function (data) {
+						$('body').append(data);
+
+						//document.getElementById("img1").src = "http://www.njuskalo.hr/image-bigger/auti/peugeot-508-1.6-hdi-navi-led-park-senz-temp-bluetooth-model-slika-80690085.jpg";
+						//document.getElementById("img2").src = "http://www.njuskalo.hr/image-80x60/auti/peugeot-508-1.6-hdi-navi-led-park-senz-temp-bluetooth-model-slika-80690085.jpg";
+						//$('#img1').src = chrome.extension.getURL("/img/01.jpg");
+						//$('#img2').src = chrome.extension.getURL("/img/thumb-01.jpg");
+					});
+			}
 		});
 		addRemoveButtons();
+		$('.EntityList-item a').click(function (e) {
+			e.preventDefault();
+			var imgs = allImages[this.href.substring(this.href.lastIndexOf('-') + 1)];
+			$('#jssor_1').html('<div id="closeBtnHolder"><button id="closeBtn">CLOSE</button></div><div data-u="loading" style="position:absolute;top:0px;left:0px;background-color:rgba(0,0,0,0.7);"><div style="filter: alpha(opacity=70); opacity: 0.7; position: absolute; display: block; top: 0px; left: 0px; width: 100%; height: 100%;"></div><div style="position:absolute;display:block;top:0px;left:0px;width:100%;height:100%;"></div></div><div data-u="slides" id="slidesHolder"></div><div data-u="thumbnavigator" id="thumbNavigator" class="jssort01" style="position:absolute;left:0px;bottom:0px;width:800px;height:100px;" data-autocenter="1"><div data-u="slides" style="cursor: default;"><div data-u="prototype" class="p"><div class="w"><div data-u="thumbnailtemplate" class="t"></div></div><div class="c"></div></div></div></div><span data-u="arrowleft" class="jssora05l" style="top:158px;left:8px;width:40px;height:40px;"></span><span data-u="arrowright" class="jssora05r" style="top:158px;right:8px;width:40px;height:40px;"></span>');
+			var html = '';
+			for (var i = 0; i < imgs.imgs.length; i++) {
+
+				html += '<div><span class="helper"></span>' +
+					'<img data-u="image" src="' + imgs.imgs[i] + '" />' +
+					'<img data-u="thumb" src="' + imgs.thumbs[i] + '" />' +
+					'</div>';
+			}
+			$('#slidesHolder').html(html);
+
+			$('#closeBtn').click(function () {
+				$('#jssor_1').hide();
+			});
+			if (false) {
+				$('#jssor_1').show();
+			}
+			else {
+				setTimeout(function () {
+					jsorSlider = new $JssorSlider$("jssor_1", jssor_1_options);
+					$('#jssor_1').show();
+				}, 1000);
+			}
+		});
 	}
 })();
 
@@ -271,11 +191,11 @@ function insertDateFirstViewed(date) {
 function fixLayoutList() {
 	//$('.block-standard.EntityListBlock').hide();
 	//$('.js-EntityList--ListItemFeaturedStore').hide();
-	$('#auxDataTogglerButton').trigger('click');
+	//$('#auxDataTogglerButton').trigger('click');
 	//$('.FlexEmbed').hide();
-	setTimeout(function () {
-		$('body').scrollTop(150);
-	}, 500);
+	//setTimeout(function () {
+	//	$('body').scrollTop(150);
+	//}, 500);
 }
 
 function getEntityElements() {
@@ -309,11 +229,30 @@ function getEntityElements() {
 function setAdditionalInfo(that) {
 	var currID = that[0].attributes["data-ad-id"].value;
 	var prices = getPrices(that[0]);
+	//var images = getImages();
 
 	setLoadingDiv(that, currID);
-	dbase.insertNewPrice(currID, prices.priceHRK, prices.priceEUR);
 
-	dbase.getPriceHistory(currID, that);
+	if (usingDAL) {
+		msgPort.postMessage({
+			cmd: messages.insertNewPrice,
+			data: {
+				itemId: currID,
+				priceHRK: prices.priceHRK,
+				priceEUR: prices.priceEUR
+			}
+		});
+
+		msgPort.postMessage({
+			cmd: messages.getPriceHistory,
+			data: { itemId: currID, domItem: that }
+		})
+	}
+
+	else {
+		dbase.insertNewPrice(currID, prices.priceHRK, prices.priceEUR);
+		dbase.getPriceHistory(currID, that);
+	}
 
 	var link = that.find('h3 a')[0].href;
 	$.ajax({
@@ -372,6 +311,9 @@ function formatMileageList(that) {
 
 function getAdditionalItemInfoCallback(response) {
 	this.find('.loadingDiv').hide();
+	var images = getImages(response);
+
+	allImages[this[0].attributes["data-ad-id"].value] = images;
 
 	var kilometri = "Prijeđeni kilometri: ";
 	var motor = 'Motor: ';
@@ -664,6 +606,21 @@ function addRemoveButtons() {
 	});
 }
 
+function getImages(response) {
+	var items = $($(response).find('.base-entity-thumbnails--multimedia')[0]).find('li.thumbnail-item a.js-galleryThumbnailLink');
+	var largeImages = [];
+	var thumbs = [];
+	for (var i = 0; i < items.length; i++) {
+		largeImages.push($(items[i])[0].href);
+		thumbs.push($($(items[i])).find('img')[0].src);
+	}
+	return {
+		imgs: largeImages,
+		thumbs: thumbs
+	}
+	console.log(items);
+}
+
 //#endregion
 
 //#region reusing
@@ -694,16 +651,11 @@ function getPrices(element) {
 	}
 }
 
-function fixDefaultLayout() {
-	//$('.content-primary').css('margin-left', '0');
-	//$('.content-primary').css('padding-left', '0');
-}
-
 function onGetHistory(tx, results) {
 	if (!this.details) {
 		//list
 		var priceHistory = results.rows;
-		if (results.rows.length > 1) {
+		if (results.length > 1) {
 			embedPriceHistory(this, priceHistory, this.currID);
 		}
 		embedDateFirstViewed(this, priceHistory);
@@ -711,16 +663,11 @@ function onGetHistory(tx, results) {
 	else {
 		//details
 		var priceHistory = results.rows;
-		if (results.rows.length > 1) {
+		if (results.length > 1) {
 			jQuery('<div/>', {
 				id: 'priceHistoryDiv',
 				class: 'price-history',
 			}).appendTo($('.base-entity-meta'));
-
-			//$('#priceHistoryDiv').css('width', '100%');
-			//$('#priceHistoryDiv').css('height', '200px');
-			//$('#priceHistoryDiv').css('margin-top', '10px');
-			//$('#priceHistoryDiv').css('margin-bottom', '10px');
 
 			jQuery('<div/>', {
 				id: 'priceHistoryText',
@@ -728,19 +675,6 @@ function onGetHistory(tx, results) {
 			jQuery('<div/>', {
 				id: 'priceHistoryChart',
 			}).appendTo($('#priceHistoryDiv'));
-
-			//$('#priceHistoryText').css('width', '40%');
-			//$('#priceHistoryText').css('height', '100%');
-			//$('#priceHistoryText').css('overflow-y', 'auto');
-			//$('#priceHistoryText').css('overflow-x', 'hidden');
-			//$('#priceHistoryText').css('padding', '0px');
-
-			//$('#priceHistoryText').css('float', 'left');
-
-			//$('#priceHistoryChart').css('width', 'calc(60% - 50px)');
-			//$('#priceHistoryChart').css('height', '100%');
-			//$('#priceHistoryChart').css('float', 'left');
-			//$('#priceHistoryChart').css('margin-left', '50px');
 
 			insertPriceHistoryText(priceHistory);
 			insertPriceHistoryChart(priceHistory);

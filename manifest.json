@@ -18,8 +18,8 @@
         "https://ajax.googleapis.com/"
     ],
     //"background": {
-    //    "scripts": [ "js/DAL.js" ],
-    //    "persistent": false
+    //    "scripts": [ "js/DAL.js" ]
+    //    //"persistent": false
     //},
     "content_scripts": [
         {
@@ -36,6 +36,7 @@
             "css": [
                 "css/morris.css",
                 "css/prettify.min.css",
+                "css/imageSlider.css",
                 "css/Njuskalo.css"
             ],
             "js": [
@@ -43,8 +44,19 @@
                 "js/raphael-min.js",
                 "js/morris.min.js",
                 "js/prettify.min.js",
-                "js/Njuskalo.js"
+                "js/dbase.js",
+                "js/jssor.slider.min.js",
+                "js/Njuskalo.js",
+                "js/imageSliderInit.js"
             ]
         }
+    ],
+    "web_accessible_resources": [
+        "*.json",
+        "*.svg",
+        "*.jpg",
+        "*.png",
+        "*.html",
+        "*.woff2"
     ]
 }
