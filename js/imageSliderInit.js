@@ -25,11 +25,12 @@ jQuery(document).ready(function ($) {
 	  //{ $Duration: 1200, $Delay: 20, $Clip: 3, $Assembly: 260, $Easing: { $Clip: $Jease$.$InCubic, $Opacity: $Jease$.$Linear }, $Opacity: 2 },
 	  //{ $Duration: 1200, $Delay: 20, $Clip: 3, $SlideOut: true, $Assembly: 260, $Easing: { $Clip: $Jease$.$OutCubic, $Opacity: $Jease$.$Linear }, $Opacity: 2 },
 	  //{ $Duration: 1200, $Delay: 20, $Clip: 12, $Assembly: 260, $Easing: { $Clip: $Jease$.$InCubic, $Opacity: $Jease$.$Linear }, $Opacity: 2 },
-	  { $Duration: 100, $Opacity: 2, $Brother: { $Duration: 100, $Opacity: 2 } }
+	  { $Duration: 100, $Opacity: 2}
 	];
 
 	jssor_1_options = {
-		$AutoPlay: false,
+		$AutoPlay: true,
+		$AutoPlayInterval: 1500,
 		$SlideshowOptions: {
 			$Class: $JssorSlideshowRunner$,
 			$Transitions: jssor_1_SlideshowTransitions,

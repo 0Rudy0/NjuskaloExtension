@@ -7,6 +7,7 @@
 			tx.executeSql('SELECT * FROM Advert where advertId = ?', [advertId], function (tx, results) {
 				if (results.rows.length == 0) {
 					insertNewAdvert(tx, advertId, priceHRK, priceEUR);
+					//summary.newAds++;
 				}
 				else {
 					updateDateLastViewed(tx, advertId);
@@ -27,6 +28,7 @@
 							}
 							if (!foundSamePrice) {
 								tx.executeSql('INSERT INTO PriceHistory VALUES (?, ?, ?, DATE("now"))', [advertId, priceHRK, priceEUR]);
+								//summary.newPrices++;
 							}
 						}
 					});

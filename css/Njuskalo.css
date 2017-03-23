@@ -2,19 +2,19 @@
 	width: 100%;
 }
 
-#priceListTable td {
-	border: 1px solid black;
-	padding: 4px;
-}
+	#priceListTable td {
+		border: 1px solid black;
+		padding: 4px;
+	}
 
-#priceListTable thead td {
-	text-align: center;
-}
+	#priceListTable thead td {
+		text-align: center;
+	}
 
-#priceListTable tbody td {
-	text-align: right;
-	font-family: Consolas;
-}
+	#priceListTable tbody td {
+		text-align: right;
+		font-family: Consolas;
+	}
 
 #chart_div {
 	width: 100%;
@@ -85,7 +85,7 @@
 }
 
 #priceHistoryText {
-	width:40%;
+	width: 40%;
 	height: 100%;
 	overflow-x: hidden;
 	overflow-y: auto;
@@ -100,7 +100,7 @@
 	margin-left: 50px;
 }
 
-#priceHistoryDiv{
+#priceHistoryDiv {
 	width: 100%;
 	height: 200px;
 	margin-top: 10px;
@@ -138,9 +138,91 @@ div.entity-thumbnail a img {
 	display: block !important;
 }
 
-.EntityList-item a.link img:hover{
+.EntityList-item a.link img:hover {
 	/*transform: translateX(-2px) translateY(-2px);*/
 	transform: scale(1.05);
 	box-shadow: 2px 2px 2px rgb(128, 128, 128);
 	transition-duration: 0.1s;
+}
+
+#popupInfo {
+	position: fixed;
+	top: 10px;
+	right: 10px;
+	width: 150px;
+	height: auto;
+	background-color: #f6f6f6;
+	padding: 10px;
+	border: 1px solid black;
+	-webkit-box-shadow: 2px 2px 5px 1px rgba(0,0,0,0.5);
+	-moz-box-shadow: 2px 2px 5px 1px rgba(0,0,0,0.5);
+	box-shadow: 2px 2px 5px 1px rgba(0,0,0,0.5);
+	opacity: 0;
+	/*display: none;*/
+}
+
+.EntityList-item--VauVau {
+	background-color: transparent !important;
+}
+
+.EntityList-item--New {
+	background-color: #fefacd !important;
+}
+
+a.historyBtn {
+	padding: 0 !important;
+	text-align: center;
+	color: white;
+}
+
+	a.historyBtn:hover {
+		text-decoration: none !important;
+	}
+
+li.historyBtnList a:hover {
+	background-color: #c3ff0e !important;
+}
+
+li.historyBtnList.newPrice a:hover {
+	background-color: #ff1b4c !important;
+}
+
+a.historyBtn > span {
+	font-size: 13px;
+	line-height: 24px;
+	font-weight: bold;
+	color: white;
+}
+
+	a.historyBtn:hover > span,
+	a.historyBtn > span:hover {
+		color: black !important;
+	}
+
+#newAdsP {
+	margin-bottom: 10px;
+}
+
+#popupInfo .close {
+	position: absolute;
+	top: 2px;
+	right: 2px;
+	width: auto;
+	height: auto;
+	color: red;
+	background-color: white;
+	font-size: 13px;
+	cursor: pointer;
+	padding: 0 4px;
+	border: 1px solid black;
+}
+
+#popupInfo .close:hover {
+	/*background-color: #e5e5e5;*/
+	/*border-color: #fbd884;*/
+	transform: scale(1.05);
+}
+
+#popupInfo .close:active {
+	transform: scale(0.95);
 }

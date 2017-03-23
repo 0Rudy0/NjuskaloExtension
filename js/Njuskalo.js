@@ -16,6 +16,10 @@ var msgPort;
 var transferDataToBckgScript = false;
 var recreateTables = false;
 var usingDAL = false;
+var summary = {
+	newAds: [],
+	newPrices: []
+};
 
 (function () {
 
@@ -66,12 +70,13 @@ var usingDAL = false;
 		//return;
 		var items = getEntityElements();
 		$.each(items, function (index, value) {
-			formatMileageList($(value));
-			setAdditionalInfo($(value));
-			insertChart($(value));
+			var isLast = false;
 			if (index == items.length - 1) {
-
+				isLast = true;
 			}
+			formatMileageList($(value));
+			setAdditionalInfo($(value), isLast);
+			insertChart($(value));
 		});
 		addRemoveButtons();
 		$('.EntityList-item a').click(function (e) {
@@ -79,28 +84,49 @@ var usingDAL = false;
 			var imgs = allImages[this.href.substring(this.href.lastIndexOf('-') + 1)];
 
 			$.get(chrome.extension.getURL('html/modalImages.html'))
-					.done(function (data) {
-						$('body').append(data);
-						var html = '';
-						for (var i = 0; i < imgs.imgs.length; i++) {
+				.done(function (data) {
+					$('body').append(data);
+					var html = '';
+					for (var i = 0; i < imgs.imgs.length; i++) {
 
-							html += '<div><span class="helper"></span>' +
-								'<img data-u="image" src="' + imgs.imgs[i] + '" />' +
-								'<img data-u="thumb" src="' + imgs.thumbs[i] + '" />' +
-								'</div>';
-						}
-						$('#slidesHolder').html(html);
+						html += '<div><span class="helper"></span>' +
+							'<img data-u="image" src="' + imgs.imgs[i] + '" />' +
+							'<img data-u="thumb" src="' + imgs.thumbs[i] + '" />' +
+							'</div>';
+					}
+					$('#slidesHolder').html(html);
 
-						$('#closeBtn').click(function () {
-							$("#jssor_1").remove();
-						});
-
-						$JssorSlider$("jssor_1", jssor_1_options);
-						//setTimeout(function () {
-						//}, 100);
+					$('#closeBtn').click(function () {
+						$('#jssor_1').animate(
+							{ opacity: 0 },
+							200,
+							function () {
+								$("#jssor_1").remove();
+								$("#overlay").remove();
+							});
+						//$("#jssor_1").remove();
 					});
 
+					$("#overlay").click(function () {
+						$('#jssor_1').animate(
+							{ opacity: 0 },
+							200,
+							function () {
+								$("#jssor_1").remove();
+								$("#overlay").remove();
+							});
+					})
+					$JssorSlider$("jssor_1", jssor_1_options);
+					//setTimeout(function () {
+					//}, 100);
+				});
 		});
+
+		$.get(chrome.extension.getURL('html/popupInfo.html'))
+				.done(function (data) {
+					$('body').append(data);
+
+				});
 	}
 })();
 
@@ -202,6 +228,10 @@ function getEntityElements() {
 				found = true;
 				break;
 			}
+			//$(vauItems[j]).removeClass('EntityList-item--VauVau');
+			//$(vauItems[j]).removeClass('js-EntityList-item--VauVau');
+			//$(vauItems[j]).addClass('EntityList-item--Regular');
+			//$(vauItems[j]).addClass('js-EntityList-item--Regular');
 		}
 		if (!found) {
 			items.push(vauItemsDuplicate[i]);
@@ -218,7 +248,7 @@ function getEntityElements() {
 	return items;
 }
 
-function setAdditionalInfo(that) {
+function setAdditionalInfo(that, isLast) {
 	var currID = that[0].attributes["data-ad-id"].value;
 	var prices = getPrices(that[0]);
 	//var images = getImages();
@@ -242,6 +272,7 @@ function setAdditionalInfo(that) {
 	}
 
 	else {
+		that.isLast = isLast;
 		dbase.insertNewPrice(currID, prices.priceHRK, prices.priceEUR);
 		dbase.getPriceHistory(currID, that);
 	}
@@ -366,18 +397,18 @@ function getAdditionalItemInfoCallback(response) {
 function embedPriceHistory(jQueryElement, priceHistory, itemId) {
 	jQuery('<li/>', {
 		id: 'historyBtnList' + itemId,
-		class: 'tool-item',
+		class: 'tool-item historyBtnList',
 		text: ''
 	}).appendTo(jQueryElement.find('.tool-items')[0]);
 	jQuery('<a/>', {
 		id: 'historyBtn' + itemId,
-		class: 'icon-item tool',
+		class: 'icon-item tool historyBtn',
 		text: ''
 	}).appendTo(jQueryElement.find('#historyBtnList' + itemId)[0]);
 	jQuery('<span/>', {
 		id: 'historyBtnIcon' + itemId,
-		class: 'icon icon--action icon--xs icon--data',
-		text: ''
+		//class: 'icon icon--action icon--xs icon--data',
+		text: priceHistory.length
 	}).appendTo(jQueryElement.find('#historyBtn' + itemId)[0]);
 
 	$('#historyBtnList' + itemId).click(function () {
@@ -434,6 +465,8 @@ function embedPriceHistory(jQueryElement, priceHistory, itemId) {
 
 		if ((new Date(priceHistory[i].date)).toLocaleDateString('hr') == (new Date().toLocaleDateString('hr'))) {
 			$('#historyBtnList' + itemId).css('background-color', '#cc002c');
+			$('#historyBtnList' + itemId).addClass('newPrice');
+			summary.newPrices.push(jQueryElement.attr('data-ad-id'));
 		}
 
 		if (i == priceHistory.length - 1) {
@@ -462,6 +495,13 @@ function embedPriceHistory(jQueryElement, priceHistory, itemId) {
 function embedDateFirstViewed(jQueryElement, priceHistory) {
 	var elapsedDays = Math.floor((new Date().getTime() - new Date(priceHistory[0].dateFirstViewed).getTime()) / 86400000);
 	var elapsedDaysString = '(prije ' + elapsedDays + ' dana)';
+	if (elapsedDays == 0) {
+		summary.newAds.push(jQueryElement.attr('data-ad-id'));
+		//jQueryElement.removeClass('EntityList-item--Regular');
+		//jQueryElement.removeClass('js-EntityList-item--Regular');
+		jQueryElement.addClass('EntityList-item--New');
+		jQueryElement.addClass('js-EntityList-item--New');
+	}
 	jQueryElement.find('.entity-pub-date span.label')[0].innerHTML = 'Obnovljen - ';
 	jQueryElement.find('.entity-pub-date')[0].innerHTML += '<br/>';
 	jQuery('<span/>', {
@@ -602,6 +642,7 @@ function getImages(response) {
 	var items = $($(response).find('.base-entity-thumbnails--multimedia')[0]).find('li.thumbnail-item a.js-galleryThumbnailLink');
 	var largeImages = [];
 	var thumbs = [];
+
 	for (var i = 0; i < items.length; i++) {
 		largeImages.push($(items[i])[0].href);
 		thumbs.push($($(items[i])).find('img')[0].src);
@@ -646,6 +687,69 @@ function getPrices(element) {
 function onGetHistory(tx, results) {
 	if (!this.details) {
 		//list
+		if (this.isLast && (summary.newAds.length > 0 || summary.newPrices.length > 0)) {
+			if (summary.newAds.length > 0) {
+				$('#newAdsP').show();
+				$('#popupInfo #newAds').html(summary.newAds.length);
+				//var html = '';
+				for (var i = 0; i < summary.newAds.length; i++) {
+					jQuery('<li/>', {
+						id: 'newAd' + summary.newAds[i],
+						text: ''
+					}).appendTo($('#newAdsList'));
+					jQuery('<a/>', {
+						id: 'newAdAnchor' + summary.newAds[i],
+						href: '#',
+						text: summary.newAds[i]
+					}).appendTo($('#newAd' + summary.newAds[i]));
+
+					$('#newAdAnchor' + summary.newAds[i]).click(onAddItemClick.bind(summary.newAds[i]));
+				}
+			}
+			else {
+				$('#newAdsP').hide();
+			}
+
+			if (summary.newPrices.length > 0) {
+				$('#changedPricesP').show();
+				$('#popupInfo #changedPriceAds').html(summary.newPrices.length);
+
+				for (var i = 0; i < summary.newPrices.length; i++) {
+					jQuery('<li/>', {
+						id: 'newPrice' + summary.newPrices[i],
+						text: ''
+					}).appendTo($('#changedPricesList'));
+					jQuery('<a/>', {
+						id: 'newPriceAnchor' + summary.newPrices[i],
+						href: '#',
+						text: summary.newPrices[i]
+					}).appendTo($('#newPrice' + summary.newPrices[i]));
+
+					$('#newPriceAnchor' + summary.newPrices[i]).click(onAddItemClick.bind(summary.newPrices[i]));
+				}
+			}
+			else {
+				$('#changedPricesP').hide();
+			}
+
+			$('#popupInfo').animate({ opacity: 1 }, 500);
+
+			$('#popupInfo .close').click(function () {
+				$('#popupInfo').animate({ opacity: 0 }, 300,
+					function () {
+						$('#popupInfo').remove();
+					});
+			})
+
+			//setTimeout(function () {
+			//	$('#popupInfo').animate({ opacity: 0 }, 1000,
+			//		function () {
+			//			$('#popupInfo').remove();
+			//		});
+			//}, 5000);
+		}
+
+		//gfs
 		var priceHistory = results.rows;
 		if (results.length > 1) {
 			embedPriceHistory(this, priceHistory, this.currID);
@@ -673,6 +777,12 @@ function onGetHistory(tx, results) {
 		}
 		insertDateFirstViewed(priceHistory[0].dateFirstViewed);
 	}
+}
+
+function onAddItemClick() {
+	$('html, body').animate({
+		scrollTop: $('li[data-ad-id="' + this + '"]').offset().top
+	}, 50);
 }
 
 function formatFloat(num, casasDec, suffix) {
@@ -798,21 +908,3 @@ function drawChart(elementId, priceHistory) {
 }
 
 //#endregion
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

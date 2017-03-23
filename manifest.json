@@ -2,7 +2,7 @@
     "manifest_version": 2,
 
     "name": "Njuskalo enhancer",
-    "description": "Formated mileage for each car (thousand separator). Added calculated horpse powers based on kWh value. Fetched some extra info for each add (auti: Motor, Mjenjac, Vlasnik, trgovina/osoba; Kuce: Broj soba, godina izgradnje). Price tracking for each add -> if there is price history for specific add, a green button appears under star icon that shows price history in the textual form as well as in graph. Added date of when the advert has appeared on the list (also calculation of days passed since that date)",
+    "description": "Enhancing Njuskalo experience, price tracking.",
     "version": "1.0.0",
     "icons": {
         "16": "icons/njuskalo-0.png",
@@ -10,17 +10,11 @@
         "128": "icons/njuskalo-0.png"
     },
     "browser_action": {
-        "default_icon": "icons/njuskalo-0.png"
-        //"default_popup": "popup.html"
+        "default_icon": "icons/njuskalo_thumb.png"
     },
     "permissions": [
-        "activeTab",
-        "https://ajax.googleapis.com/"
+        "activeTab"
     ],
-    //"background": {
-    //    "scripts": [ "js/DAL.js" ]
-    //    //"persistent": false
-    //},
     "content_scripts": [
         {
             "matches": [
@@ -30,8 +24,8 @@
                 "http://www.njuskalo.hr/prodaja-stanova*",
                 "http://www.njuskalo.hr/nekretnine*",
                 "http://www.njuskalo.hr/novogradnja*",
-                "http://www.njuskalo.hr/?ctl=browse_ads&sort=new&categoryId=9580*", //prodaja stanova
-                "http://www.njuskalo.hr/?ctl=browse_ads&sort=new&categoryId=9579*" //prodaja kuca
+                "http://www.njuskalo.hr/?ctl=browse_ads&sort=new&categoryId=9580*",
+                "http://www.njuskalo.hr/?ctl=browse_ads&sort=new&categoryId=9579*"
             ],
             "css": [
                 "css/morris.css",
@@ -46,8 +40,8 @@
                 "js/prettify.min.js",
                 "js/dbase.js",
                 "js/jssor.slider.min.js",
-                "js/Njuskalo.js",
-                "js/imageSliderInit.js"
+                "js/imageSliderInit.js",
+                "js/Njuskalo.js"
             ]
         }
     ],
