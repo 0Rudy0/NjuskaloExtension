@@ -153,11 +153,12 @@ div.entity-thumbnail a img {
 	height: auto;
 	background-color: #f6f6f6;
 	padding: 10px;
-	border: 1px solid black;
-	-webkit-box-shadow: 2px 2px 5px 1px rgba(0,0,0,0.5);
-	-moz-box-shadow: 2px 2px 5px 1px rgba(0,0,0,0.5);
-	box-shadow: 2px 2px 5px 1px rgba(0,0,0,0.5);
+	border: 1px solid #d0d0ce;
+	-webkit-box-shadow: inset 0 0 0 1px hsla(0,0%,100%,.75);
+	-moz-box-shadow: inset 0 0 0 1px hsla(0,0%,100%,.75);
+	box-shadow: inset 0 0 0 1px hsla(0,0%,100%,.75);
 	opacity: 0;
+	border-radius: 4px;
 	/*display: none;*/
 }
 
@@ -209,12 +210,12 @@ a.historyBtn > span {
 	right: 2px;
 	width: auto;
 	height: auto;
-	color: red;
+	color: black;
 	background-color: white;
 	font-size: 13px;
 	cursor: pointer;
 	padding: 0 4px;
-	border: 1px solid black;
+	border: 1px solid #bebeb9;
 }
 
 #popupInfo .close:hover {

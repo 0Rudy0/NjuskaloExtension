@@ -79,7 +79,7 @@ var summary = {
 			insertChart($(value));
 		});
 		addRemoveButtons();
-		$('.EntityList-item a').click(function (e) {
+		$('.EntityList-item .entity-thumbnail a').click(function (e) {
 			e.preventDefault();
 			var imgs = allImages[this.href.substring(this.href.lastIndexOf('-') + 1)];
 
