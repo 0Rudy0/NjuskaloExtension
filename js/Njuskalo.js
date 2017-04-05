@@ -66,8 +66,6 @@ var summary = {
 		scrollonImageClick();
 	}
 	else {
-		//fixLayoutList();
-		//return;
 		var items = getEntityElements();
 		$.each(items, function (index, value) {
 			var isLast = false;
@@ -75,7 +73,9 @@ var summary = {
 				isLast = true;
 			}
 			formatMileageList($(value));
-			setAdditionalInfo($(value), isLast);
+			setTimeout(function () {
+				setAdditionalInfo($(value), isLast);
+			}, index * 1);
 			insertChart($(value));
 		});
 		addRemoveButtons();
@@ -223,7 +223,9 @@ function getEntityElements() {
 	for (var i = 0; i < vauItemsDuplicate.length; i++) {
 		var found = false;
 		for (var j = 0; j < vauItems.length; j++) {
-			if ($(vauItemsDuplicate[i])[0].attributes["data-ad-id"].value == $(vauItems[j])[0].attributes["data-ad-id"].value) {
+			//console.log(JSON.parse($(vauItemsDuplicate[i])[0].attributes["data-boot"].value).id);
+			if (JSON.parse($(vauItemsDuplicate[i])[0].attributes["data-boot"].value).id ==
+				JSON.parse($(vauItems[j])[0].attributes["data-boot"].value).id) {
 				$(vauItemsDuplicate[i]).hide();
 				found = true;
 				break;
@@ -249,8 +251,10 @@ function getEntityElements() {
 }
 
 function setAdditionalInfo(that, isLast) {
-	var currID = that[0].attributes["data-ad-id"].value;
+	var currID = JSON.parse(that[0].attributes["data-boot"].value).id;
 	var prices = getPrices(that[0]);
+	var currTitle = $(that).find('h3.entity-title a').html();
+	//console.log(currTitle);
 	//var images = getImages();
 
 	setLoadingDiv(that, currID);
@@ -273,20 +277,53 @@ function setAdditionalInfo(that, isLast) {
 
 	else {
 		that.isLast = isLast;
-		dbase.insertNewPrice(currID, prices.priceHRK, prices.priceEUR);
+		//var desc = $(that).find('.entity-description-main').html();
+		//var keyInd = '';
+		//if ($('.breadcrumb-items').html().indexOf('Auto Moto') > 0) {
+		//	//keyInd = desc.substring(0, desc.indexOf('<')).trim();
+		//	//keyInd = keyInd.toLowerCase().
+		//	//	replace('vozilo', '').
+		//	//	replace('rabljeno', '').
+		//	//	replace('novo', '').
+		//	//	replace('testno', '').
+		//	//	replace('km', '').
+		//	//	replace(',', '').
+		//	//	replace('.', '').trim();
+		//	//keyInd = parseInt(keyInd) || 0;
+		//	keyInd = desc.trim()
+		//}
+
+		//console.log(keyInd);
 		dbase.getPriceHistory(currID, that);
 	}
 
 	var link = that.find('h3 a')[0].href;
+	that.url = link;
 	$.ajax({
 		url: link,
 		async: true,
 		cache: true,
 		success: getAdditionalItemInfoCallback.bind(that),
 		error: function (response) {
+			//that.find('.loadingDiv').hide();
 			console.log('error');
 		}
 	});
+}
+
+function checkBeforeMerge(newAdvert, oldAdvert) {
+	$.get(chrome.extension.getURL('html/mergeModal.html'))
+	.done((function (data) {
+		data.replace('{modalID}', 'mergeModal' + oldAdvert.advertId);
+		var mId = '#mergeModal' + oldAdvert.advertId;
+		$('body').append(data);
+		$(mId).show();
+		//blablabla
+
+		$(mId + ' .mergeBtn').click(function () {
+			dal.insertNewAdvert(newAdvert.advertId, newAdvert.priceHRK, newAdvert.priceEUR, newAdvert.title, newAdvert.keyIdentifier);
+		})
+	}));
 }
 
 function setLoadingDiv(element, itemId) {
@@ -336,20 +373,38 @@ function getAdditionalItemInfoCallback(response) {
 	this.find('.loadingDiv').hide();
 	var images = getImages(response);
 
-	allImages[this[0].attributes["data-ad-id"].value] = images;
+	allImages[JSON.parse(this[0].attributes["data-boot"].value).id] = images;
 
+	var username = $(response).find('.Profile-wrapUsername a').attr('href')
 	var kilometri = "Prijeđeni kilometri: ";
 	var motor = 'Motor: ';
 	var rows = $(response).find('.table-summary tbody tr');
 	var sideDescItems = [];
+	var concatTitle = '';
+
 	for (var j = 0; j < rows.length; j++) {
-		if ($($(rows[j]).find('th'))[0].innerHTML == 'Motor:') {
+		if ($($(rows[j]).find('th'))[0].innerHTML == 'Marka automobila:') {
+			concatTitle += $($(rows[j]).find('td'))[0].innerHTML + ';'
+		}
+		else if ($($(rows[j]).find('th'))[0].innerHTML == 'Model automobila:') {
+			concatTitle += $($(rows[j]).find('td'))[0].innerHTML + ';'
+		}
+		else if ($($(rows[j]).find('th'))[0].innerHTML == 'Tip automobila:') {
+			concatTitle += $($(rows[j]).find('td'))[0].innerHTML + ';'
+		}
+		else if ($($(rows[j]).find('th'))[0].innerHTML == 'Godina modela:') {
+			concatTitle += $($(rows[j]).find('td'))[0].innerHTML + ';'
+		}
+		else if ($($(rows[j]).find('th'))[0].innerHTML == 'Motor:') {
 			motor += $($(rows[j]).find('td'))[0].innerHTML + ' - ';
+			concatTitle += $($(rows[j]).find('td'))[0].innerHTML + ';'
 		}
 		else if ($($(rows[j]).find('th'))[0].innerHTML == 'Snaga motora:') {
 			motor += $($(rows[j]).find('td'))[0].innerHTML.replace(' <abbr title="kilovati">kW</abbr>', ' kWh');
 			var toHorsePower = parseInt($($(rows[j]).find('td'))[0].innerHTML.replace(' <abbr title="kilovati">kW</abbr>', '')) * 1.3428;
 			sideDescItems.push(motor + ' (' + Math.ceil(toHorsePower) + ' hp)');
+
+			concatTitle += $($(rows[j]).find('td'))[0].innerHTML.replace(' <abbr title="kilovati">kW</abbr>', 'kWh');
 		}
 		else if ($($(rows[j]).find('th'))[0].innerHTML == 'Mjenjač:') {
 			sideDescItems.push('Mjenjač: ' + $($(rows[j]).find('td'))[0].innerHTML);
@@ -392,6 +447,14 @@ function getAdditionalItemInfoCallback(response) {
 
 	$(this.find('#entity-description-rest')[0]).css('float', 'right');
 	$(this.find('#entity-description-rest')[0]).css('padding-right', '50px');
+
+	//insert new price
+	var currID = JSON.parse(this.attributes["data-boot"].value).id;
+	var prices = getPrices(this);
+	//var currTitle = $(this).find('h3.entity-title a').html();
+	var mainDesc = $(that).find('.entity-description-main').html().trim();
+	//keyInd = desc.trim()
+	dbase.insertNewPrice(currID, prices.priceHRK, prices.priceEUR, concatTitle, mainDesc, username, this.url, checkBeforeMerge);
 }
 
 function embedPriceHistory(jQueryElement, priceHistory, itemId) {
@@ -466,7 +529,7 @@ function embedPriceHistory(jQueryElement, priceHistory, itemId) {
 		if ((new Date(priceHistory[i].date)).toLocaleDateString('hr') == (new Date().toLocaleDateString('hr'))) {
 			$('#historyBtnList' + itemId).css('background-color', '#cc002c');
 			$('#historyBtnList' + itemId).addClass('newPrice');
-			summary.newPrices.push(jQueryElement.attr('data-ad-id'));
+			summary.newPrices.push(JSON.parse(jQueryElement.attr('data-boot')).id);
 		}
 
 		if (i == priceHistory.length - 1) {
@@ -496,7 +559,7 @@ function embedDateFirstViewed(jQueryElement, priceHistory) {
 	var elapsedDays = Math.floor((new Date().getTime() - new Date(priceHistory[0].dateFirstViewed).getTime()) / 86400000);
 	var elapsedDaysString = '(prije ' + elapsedDays + ' dana)';
 	if (elapsedDays == 0) {
-		summary.newAds.push(jQueryElement.attr('data-ad-id'));
+		summary.newAds.push(JSON.parse(jQueryElement.attr('data-boot')).id);
 		//jQueryElement.removeClass('EntityList-item--Regular');
 		//jQueryElement.removeClass('js-EntityList-item--Regular');
 		jQueryElement.addClass('EntityList-item--New');
@@ -515,7 +578,7 @@ function embedDateFirstViewed(jQueryElement, priceHistory) {
 }
 
 function insertChart(that) {
-	var itemId = that[0].attributes["data-ad-id"].value;
+	var itemId = JSON.parse(that[0].attributes["data-boot"].value).id;
 	jQuery('<div/>', {
 		id: 'chart_div' + itemId,
 		text: ''
@@ -651,7 +714,7 @@ function getImages(response) {
 		imgs: largeImages,
 		thumbs: thumbs
 	}
-	console.log(items);
+	//console.log(items);
 }
 
 //#endregion
@@ -781,7 +844,7 @@ function onGetHistory(tx, results) {
 
 function onAddItemClick() {
 	$('html, body').animate({
-		scrollTop: $('li[data-ad-id="' + this + '"]').offset().top
+		scrollTop: $('li[data-boot="{\"hasCompare\":true,\"id\":' + this + '}"]').offset().top
 	}, 50);
 }
 

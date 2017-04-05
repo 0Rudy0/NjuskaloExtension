@@ -130,7 +130,7 @@ div.entity-thumbnail a img {
 	display: none;
 }
 
-.EntityList-item:not(.js-EntityList-item) {
+.EntityList-item:not([data-boot]) {
 	display: none;
 }
 

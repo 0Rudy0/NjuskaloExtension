@@ -77,7 +77,8 @@
 			tx.executeSql('CREATE TABLE IF NOT EXISTS Advert (' +
 				'advertId integer unique primary key,' +
 				'dateLastViewed VARCHAR(15),' +
-				'dateFirstViewed VARCHAR(15))'
+				'dateFirstViewed VARCHAR(15),' + 
+				'title VARCHAR(50))'
 				);
 		});
 		db.transaction(function (tx) {

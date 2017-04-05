@@ -1,16 +1,20 @@
 ﻿var dbase = (function () {
 	var self = this;
 	var db = openDatabase('Njuskalo', '1.0', 'Njuskalo pracenje cijena oglasa', 2 * 1024 * 1024);
+	var allFinished = [];
 
-	var insertNewPrice = function (advertId, priceHRK, priceEUR) {
+	var insertNewPrice = function (advertId, priceHRK, priceEUR, title, mainDesc, username, url, callback) {
 		db.transaction(function (tx) {
 			tx.executeSql('SELECT * FROM Advert where advertId = ?', [advertId], function (tx, results) {
 				if (results.rows.length == 0) {
-					insertNewAdvert(tx, advertId, priceHRK, priceEUR);
+					//checkIfFakeNew(tx, advertId, priceHRK, priceEUR, title, mainDesc, username, url, callback);
+					insertNewAdvert(advertId, priceHRK, priceEUR, title, mainDesc, username);
 					//summary.newAds++;
 				}
 				else {
 					updateDateLastViewed(tx, advertId);
+					//updateTitle(tx, advertId, title);
+					//updateMainDesc(tx, advertId, keyIdentifier);
 					tx.executeSql('SELECT date, priceHRK, priceEUR FROM PriceHistory where advertId = ? ORDER BY date DESC', [advertId], function (tx, historyResults) {
 						if (historyResults.rows.length == 0) {
 							//ako ne postoji ni jedan entry u priceHistory tablici, jednostavno unesi novi redak
@@ -37,21 +41,83 @@
 		});
 	}
 
+	var checkIfFakeNew = function (tx, advertId, priceHRK, priceEUR, title, mainDesc, username, url, callback) {
+		tx.executeSql('SELECT * from Advert where title = ?', [title], function (tx, result) {
+			if (result.rows.length > 0) {
+				var withSameTitle = result.rows;
+				for (var i = 0; i < withSameTitle.length; i++) {
+					var adv = withSameTitle[i];
+					if (adv.username == username) {
+						tx.executeSql('SELECT date, priceHRK, priceEUR FROM PriceHistory where advertId = ? ORDER BY date DESC', [adv.advertId], function (tx, result) {
+							var newAdvert = {
+								advertId: advertId,
+								priceHRK: priceHRK,
+								priceEUR: priceEUR,
+								title: title,
+								mainDesc: mainDesc,
+								username: username,
+								url: url
+							}
+							var oldAdvert = {
+								advertId: adv.advertId,
+								title: adv.title,
+								priceHistory: result.rows,
+								mainDesc: adv.mainDesc,
+								username: adv.username
+							}
+							callback(newAdvert, oldAdvert);
+						});
+					}					
+				}
+			}
+		});
+	}
+
 	var updateDateLastViewed = function (tx, advertId) {
 		tx.executeSql("UPDATE Advert SET dateLastViewed = DATE('now') where advertId = ?", [advertId]);
 	}
 
-	var insertNewAdvert = function (tx, advertId, priceHRK, priceEUR) {
-		tx.executeSql('INSERT INTO Advert (advertId,dateLastViewed,dateFirstViewed) VALUES (?, Date("now"), Date("now"))', [advertId],
+	var updateTitle = function (tx, advertId, title) {
+		tx.executeSql("UPDATE Advert SET title = ? where advertId = ?", [title, advertId], null,
+			function () {
+				tx.executeSql('ALTER TABLE Advert ADD title VARCHAR(120)', [],
+						function () {
+							updateTitle(tx, advertId, title);
+						});
+			});
+	}
+
+	var updateMainDesc = function (tx, advertId, mainDesc) {
+		tx.executeSql("UPDATE Advert SET mainDesc = ? where advertId = ?", [mainDesc, advertId], null,
+			function () {
+				tx.executeSql('ALTER TABLE Advert ADD mainDesc VARCHAR(150)', [],
+						function () {
+							updateMainDesc(tx, advertId, mainDesc)
+						});
+				tx.executeSql('ALTER TABLE Advert ADD username VARCHAR(50)', []);
+			});
+	}
+
+	var insertNewAdvert = function (advertId, priceHRK, priceEUR, title, mainDesc, username) {
+		db.transaction(function (tx) {
+			tx.executeSql('INSERT INTO Advert (advertId,dateLastViewed,dateFirstViewed,title,mainDesc,username) VALUES (?, Date("now"), Date("now"), ?, ?, ?)', [advertId, title, mainDesc, username],
 			null, function () {
-				//ako se dogodila greška, ne postoji kolona "dateFirstViewed" pa ju prvo dodaj nakon cega ponovi naredbu te updateataj tu kolonu za sve oglase
-				tx.executeSql('ALTER TABLE Advert ADD dateFirstViewed VARCHAR(15)', [], function () {
-					tx.executeSql('INSERT INTO Advert (advertId,dateLastViewed,dateFirstViewed) VALUES (?, Date("now"), Date("now"))', [advertId], function () {
+				//ako se dogodila greška, ne postoji kolona "dateFirstViewed" pa ju prvo dodaj nakon cega ponovi naredbu te updateataj kolonu "dateFirstViewied" za sve oglase
+				tx.executeSql('ALTER TABLE Advert ADD dateFirstViewed VARCHAR(15)', [],
+					function () {
 						tx.executeSql('UPDATE Advert set dateFirstViewed = dateLastViewed');
 					});
-				}, null);
+				tx.executeSql('ALTER TABLE Advert ADD title VARCHAR(120)', []);
+				tx.executeSql('ALTER TABLE Advert ADD mainDesc VARCHAR(150)', []);
+				tx.executeSql('ALTER TABLE Advert ADD username VARCHAR(50)', []);
+
+				setTimeout(function () {
+					insertNewPrice(advertId, priceHRK, priceEUR, title, keyIdentifier);
+				}, 1000)
 			});
-		tx.executeSql('INSERT INTO PriceHistory VALUES (?, ?, ?, Date("now"))', [advertId, priceHRK, priceEUR]);
+			tx.executeSql('INSERT INTO PriceHistory VALUES (?, ?, ?, Date("now"))', [advertId, priceHRK, priceEUR]);
+		});
+		
 	}
 
 	var getPriceHistory = function (advertId, domItem) {
@@ -71,7 +137,10 @@
 		db.transaction(function (tx) {
 			tx.executeSql('CREATE TABLE IF NOT EXISTS Advert (' +
 				'advertId integer unique primary key,' +
-				'dateLastViewed VARCHAR(80))'
+				'dateLastViewed VARCHAR(80),' +
+				'title VARCHAR(120)' + 
+				'mainDesc VARCHAR(150)' + 
+				'username VARCHAR(50))'
 				);
 		});
 		db.transaction(function (tx) {
@@ -156,6 +225,7 @@
 
 	return {
 		insertNewPrice: insertNewPrice,
+		insertNewAdvert: insertNewAdvert,
 		getPriceHistory: getPriceHistory,
 		createTables: createTables,
 		deleteTables: deleteTables,
