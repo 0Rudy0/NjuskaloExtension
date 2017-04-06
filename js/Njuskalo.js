@@ -276,24 +276,7 @@ function setAdditionalInfo(that, isLast) {
 	}
 
 	else {
-		that.isLast = isLast;
-		//var desc = $(that).find('.entity-description-main').html();
-		//var keyInd = '';
-		//if ($('.breadcrumb-items').html().indexOf('Auto Moto') > 0) {
-		//	//keyInd = desc.substring(0, desc.indexOf('<')).trim();
-		//	//keyInd = keyInd.toLowerCase().
-		//	//	replace('vozilo', '').
-		//	//	replace('rabljeno', '').
-		//	//	replace('novo', '').
-		//	//	replace('testno', '').
-		//	//	replace('km', '').
-		//	//	replace(',', '').
-		//	//	replace('.', '').trim();
-		//	//keyInd = parseInt(keyInd) || 0;
-		//	keyInd = desc.trim()
-		//}
-
-		//console.log(keyInd);
+		that.isLast = isLast;		
 		dbase.getPriceHistory(currID, that);
 	}
 
@@ -304,6 +287,9 @@ function setAdditionalInfo(that, isLast) {
 		async: true,
 		cache: true,
 		success: getAdditionalItemInfoCallback.bind(that),
+		//success: function (response) {
+		//	//var images = getImages(response);
+		//},
 		error: function (response) {
 			//that.find('.loadingDiv').hide();
 			console.log('error');
@@ -314,15 +300,56 @@ function setAdditionalInfo(that, isLast) {
 function checkBeforeMerge(newAdvert, oldAdvert) {
 	$.get(chrome.extension.getURL('html/mergeModal.html'))
 	.done((function (data) {
-		data.replace('{modalID}', 'mergeModal' + oldAdvert.advertId);
+		data = data.replace('{modalID}', 'mergeModal' + oldAdvert.advertId);
 		var mId = '#mergeModal' + oldAdvert.advertId;
 		$('body').append(data);
 		$(mId).show();
-		//blablabla
+		var title = oldAdvert.title;
+		while (title.indexOf(';') > 0) {
+			title = title.replace(';', '<br/>');
+		}
+		$(mId + ' .leftContent .title').html(title);
+		$(mId + ' .leftContent a.username').html(oldAdvert.username);
+		$(mId + ' .leftContent a.username').attr('href', 'http://www.njuskalo.hr' + oldAdvert.username);
+		$(mId + ' .leftContent p.description').html(oldAdvert.mainDesc);
+		for (var i = 0; i < oldAdvert.priceHistory.length; i++) {
+			var ph = oldAdvert.priceHistory[i];
+			var priceHrk = formatFloat(ph.priceHRK, 0) + ' HRK';
+			var priceEur = formatFloat(ph.priceEUR, 0) + ' €';
+			$(mId + ' .leftContent ul.price-history').append('<li><b>' +
+				new Date(ph.date).toLocaleDateString('hr') + '</b> - ' + priceHrk + ' ; ' + priceEur + '</li>');
+		}
+		$(mId + ' .leftContent p.dateFirstViewed').html(oldAdvert.dateFirstViewed.toLocaleDateString('hr'));
+		$(mId + ' .leftContent p.dateLastViewed').html(oldAdvert.dateLastViewed.toLocaleDateString('hr'));
 
-		$(mId + ' .mergeBtn').click(function () {
-			dal.insertNewAdvert(newAdvert.advertId, newAdvert.priceHRK, newAdvert.priceEUR, newAdvert.title, newAdvert.keyIdentifier);
-		})
+		title = newAdvert.title;
+		while (title.indexOf(';') > 0) {
+			title = title.replace(';', '<br/>');
+		}
+		$(mId + ' .rightContent .title').html(title);
+		$(mId + ' .rightContent a.newAdvLink').attr('href', newAdvert.url)
+		$(mId + ' .rightContent a.username').html(newAdvert.username);
+		$(mId + ' .rightContent a.username').attr('href', 'http://www.njuskalo.hr' + newAdvert.username);
+		$(mId + ' .rightContent p.description').html(newAdvert.mainDesc);
+		var priceHrk = formatFloat(newAdvert.priceHRK, 0) + ' HRK';
+		var priceEur = formatFloat(newAdvert.priceEUR, 0) + ' €';
+		$(mId + ' .rightContent ul.price-history').html('<li>' + priceHrk + ' ; ' + priceEur + '</li>');
+
+		$(mId + ' .acceptMerge').click(function () {
+			$(mId).hide();
+			dbase.mergeAdverts(oldAdvert.advertId, newAdvert.advertId, newAdvert.priceHRK, newAdvert.priceEUR, newAdvert.title, newAdvert.mainDesc, newAdvert.username);
+			setTimeout(function () {
+				location.reload();
+			}, 100);
+		});
+		$(mId + ' .cancelMerge').click(function () {
+			$(mId).hide();
+			dbase.insertNewAdvert(newAdvert.advertId, newAdvert.priceHRK, newAdvert.priceEUR, newAdvert.title, newAdvert.mainDesc, newAdvert.username);
+		});
+		$(mId + ' .closeBtn').click(function () {
+			$(mId).hide();
+			//dbase.insertNewAdvert(newAdvert.advertId, newAdvert.priceHRK, newAdvert.priceEUR, newAdvert.title, newAdvert.mainDesc, newAdvert.username);
+		});
 	}));
 }
 
@@ -375,13 +402,13 @@ function getAdditionalItemInfoCallback(response) {
 
 	allImages[JSON.parse(this[0].attributes["data-boot"].value).id] = images;
 
-	var username = $(response).find('.Profile-wrapUsername a').attr('href')
+	var username = $(response).find('.Profile-wrapUsername a').attr('href');
+	//return;
 	var kilometri = "Prijeđeni kilometri: ";
 	var motor = 'Motor: ';
 	var rows = $(response).find('.table-summary tbody tr');
 	var sideDescItems = [];
 	var concatTitle = '';
-
 	for (var j = 0; j < rows.length; j++) {
 		if ($($(rows[j]).find('th'))[0].innerHTML == 'Marka automobila:') {
 			concatTitle += $($(rows[j]).find('td'))[0].innerHTML + ';'
@@ -449,12 +476,25 @@ function getAdditionalItemInfoCallback(response) {
 	$(this.find('#entity-description-rest')[0]).css('padding-right', '50px');
 
 	//insert new price
-	var currID = JSON.parse(this.attributes["data-boot"].value).id;
+	var currID = JSON.parse(this[0].attributes["data-boot"].value).id;
 	var prices = getPrices(this);
-	//var currTitle = $(this).find('h3.entity-title a').html();
-	var mainDesc = $(that).find('.entity-description-main').html().trim();
-	//keyInd = desc.trim()
-	dbase.insertNewPrice(currID, prices.priceHRK, prices.priceEUR, concatTitle, mainDesc, username, this.url, checkBeforeMerge);
+	var mainDesc = $(this).find('.entity-description-main').html().trim();
+
+	var extraInfo = $(response).find('.passage-standard h3');
+	for (var i = 0; i < extraInfo.length; i++) {
+		if ($(extraInfo[i]).html() == 'Dodatni podaci:') {
+			var lis = $(extraInfo[i]).next().find('li');
+			for (var j = 0; j < lis.length; j++) {
+				if ($(lis[j]).html().indexOf('Boja') > -1) {
+					concatTitle += ';' + $(lis[j]).html().replace('Boja: ', '');
+					//console.log($(lis[j]).html().replace('Boja: ', ''));
+					dbase.insertNewPrice(currID, prices.priceHRK, prices.priceEUR, concatTitle, mainDesc, username, this.url, checkBeforeMerge);
+					return;
+				}
+			}
+		}
+	}
+
 }
 
 function embedPriceHistory(jQueryElement, priceHistory, itemId) {
@@ -556,7 +596,10 @@ function embedPriceHistory(jQueryElement, priceHistory, itemId) {
 }
 
 function embedDateFirstViewed(jQueryElement, priceHistory) {
-	var elapsedDays = Math.floor((new Date().getTime() - new Date(priceHistory[0].dateFirstViewed).getTime()) / 86400000);
+	var elapsedDays = 0;
+	if (priceHistory.length > 0) {
+		elapsedDays = Math.floor((new Date().getTime() - new Date(priceHistory[0].dateFirstViewed).getTime()) / 86400000);
+	}
 	var elapsedDaysString = '(prije ' + elapsedDays + ' dana)';
 	if (elapsedDays == 0) {
 		summary.newAds.push(JSON.parse(jQueryElement.attr('data-boot')).id);
@@ -571,9 +614,10 @@ function embedDateFirstViewed(jQueryElement, priceHistory) {
 		class: 'labelAlt',
 		text: 'Prvi puta viđen - '
 	}).appendTo(jQueryElement.find('.entity-pub-date')[0]);
+	var date = priceHistory.length == 0 ? new Date() : new Date(priceHistory[0].dateFirstViewed);
 	jQuery('<span/>', {
 		class: 'date date--full',
-		text: new Date(priceHistory[0].dateFirstViewed).toLocaleDateString('hr') + ' ' + elapsedDaysString
+		text: date.toLocaleDateString('hr') + ' ' + elapsedDaysString
 	}).appendTo(jQueryElement.find('.entity-pub-date')[0]);
 }
 

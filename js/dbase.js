@@ -5,16 +5,18 @@
 
 	var insertNewPrice = function (advertId, priceHRK, priceEUR, title, mainDesc, username, url, callback) {
 		db.transaction(function (tx) {
+			//checkIfFakeNew(tx, advertId, priceHRK, priceEUR, title, mainDesc, username, url, callback);
+			//return;
 			tx.executeSql('SELECT * FROM Advert where advertId = ?', [advertId], function (tx, results) {
 				if (results.rows.length == 0) {
-					//checkIfFakeNew(tx, advertId, priceHRK, priceEUR, title, mainDesc, username, url, callback);
-					insertNewAdvert(advertId, priceHRK, priceEUR, title, mainDesc, username);
+					checkIfFakeNew(advertId, priceHRK, priceEUR, title, mainDesc, username, url, callback);
+					//insertNewAdvert(advertId, priceHRK, priceEUR, title, mainDesc, username);
 					//summary.newAds++;
 				}
 				else {
-					updateDateLastViewed(tx, advertId);
+					updateAdvertData(tx, advertId, title, mainDesc, username);
 					//updateTitle(tx, advertId, title);
-					//updateMainDesc(tx, advertId, keyIdentifier);
+					//updateMainDesc(tx, advertId, mainDesc);
 					tx.executeSql('SELECT date, priceHRK, priceEUR FROM PriceHistory where advertId = ? ORDER BY date DESC', [advertId], function (tx, historyResults) {
 						if (historyResults.rows.length == 0) {
 							//ako ne postoji ni jedan entry u priceHistory tablici, jednostavno unesi novi redak
@@ -41,67 +43,87 @@
 		});
 	}
 
-	var checkIfFakeNew = function (tx, advertId, priceHRK, priceEUR, title, mainDesc, username, url, callback) {
-		tx.executeSql('SELECT * from Advert where title = ?', [title], function (tx, result) {
-			if (result.rows.length > 0) {
-				var withSameTitle = result.rows;
-				for (var i = 0; i < withSameTitle.length; i++) {
-					var adv = withSameTitle[i];
-					if (adv.username == username) {
-						tx.executeSql('SELECT date, priceHRK, priceEUR FROM PriceHistory where advertId = ? ORDER BY date DESC', [adv.advertId], function (tx, result) {
-							var newAdvert = {
-								advertId: advertId,
-								priceHRK: priceHRK,
-								priceEUR: priceEUR,
-								title: title,
-								mainDesc: mainDesc,
-								username: username,
-								url: url
-							}
-							var oldAdvert = {
-								advertId: adv.advertId,
-								title: adv.title,
-								priceHistory: result.rows,
-								mainDesc: adv.mainDesc,
-								username: adv.username
-							}
-							callback(newAdvert, oldAdvert);
-						});
-					}					
+	var checkIfFakeNew = function (advertId, priceHRK, priceEUR, title, mainDesc, username, url, callback) {
+		//callback(null, { advertId: 3 });
+
+		//return;
+		db.transaction(function (tx) {
+			tx.executeSql('SELECT * from Advert where title = ?', [title], function (tx, result) {
+				if (result.rows.length > 0) {
+					var withSameTitle = result.rows;
+					for (var i = 0; i < withSameTitle.length; i++) {
+						var adv = withSameTitle[i];
+						if (adv.username == username) {
+						//if (adv.username != username) {
+							tx.executeSql('SELECT date, priceHRK, priceEUR FROM PriceHistory where advertId = ? ORDER BY date DESC', [adv.advertId], function (tx, result) {
+								var newAdvert = {
+									advertId: advertId,
+									priceHRK: priceHRK,
+									priceEUR: priceEUR,
+									title: title,
+									mainDesc: mainDesc,
+									username: username,
+									url: url
+								}
+								var oldAdvert = {
+									advertId: adv.advertId,
+									title: adv.title,
+									priceHistory: result.rows,
+									mainDesc: adv.mainDesc,
+									username: adv.username,
+									dateLastViewed: new Date(adv.dateLastViewed),
+									dateFirstViewed: new Date(adv.dateFirstViewed)
+								}
+								callback(newAdvert, oldAdvert);
+							});
+						}
+						else {
+							insertNewAdvert(advertId, priceHRK, priceEUR, title, mainDesc, username);
+						}
+					}
 				}
-			}
+				else {
+					insertNewAdvert(advertId, priceHRK, priceEUR, title, mainDesc, username);
+				}
+			}, function (e, a, b) {
+				console.log('greska prilikom provjere');
+				console.log(e);
+				db.transaction(function (tx) {
+					tx.executeSql('ALTER TABLE Advert ADD title VARCHAR(120)', []);
+					tx.executeSql('ALTER TABLE Advert ADD mainDesc VARCHAR(150)', []);
+					tx.executeSql('ALTER TABLE Advert ADD username VARCHAR(50)', []);
+				});
+				setTimeout(function () {
+					//checkIfFakeNew(advertId, priceHRK, priceEUR, title, mainDesc, username, url, callback);
+				}, 500)
+			});
+		});
+		
+	}
+
+	var mergeAdverts = function (oldAdvertId, newAdvertId, priceHRK, priceEUR, title, mainDesc, username) {
+		db.transaction(function (tx) {
+			tx.executeSql('UPDATE Advert set advertId = ? where advertId = ?', [newAdvertId, oldAdvertId]);
+			tx.executeSql('UPDATE PriceHistory set advertId = ? where advertId = ?', [newAdvertId, oldAdvertId]);
+			setTimeout(function () {
+				insertNewPrice(newAdvertId, priceHRK, priceEUR, title, mainDesc, username, null, null);
+			}, 500);
 		});
 	}
-
-	var updateDateLastViewed = function (tx, advertId) {
+	
+	var updateAdvertData = function (tx, advertId, title, mainDesc, username) {
 		tx.executeSql("UPDATE Advert SET dateLastViewed = DATE('now') where advertId = ?", [advertId]);
+		tx.executeSql("UPDATE Advert SET title = ? where advertId = ?", [title, advertId]);
+		tx.executeSql("UPDATE Advert SET mainDesc = ? where advertId = ?", [mainDesc, advertId]);
+		tx.executeSql("UPDATE Advert SET username = ? where advertId = ?", [username, advertId]);
 	}
-
-	var updateTitle = function (tx, advertId, title) {
-		tx.executeSql("UPDATE Advert SET title = ? where advertId = ?", [title, advertId], null,
-			function () {
-				tx.executeSql('ALTER TABLE Advert ADD title VARCHAR(120)', [],
-						function () {
-							updateTitle(tx, advertId, title);
-						});
-			});
-	}
-
-	var updateMainDesc = function (tx, advertId, mainDesc) {
-		tx.executeSql("UPDATE Advert SET mainDesc = ? where advertId = ?", [mainDesc, advertId], null,
-			function () {
-				tx.executeSql('ALTER TABLE Advert ADD mainDesc VARCHAR(150)', [],
-						function () {
-							updateMainDesc(tx, advertId, mainDesc)
-						});
-				tx.executeSql('ALTER TABLE Advert ADD username VARCHAR(50)', []);
-			});
-	}
-
+	
 	var insertNewAdvert = function (advertId, priceHRK, priceEUR, title, mainDesc, username) {
 		db.transaction(function (tx) {
 			tx.executeSql('INSERT INTO Advert (advertId,dateLastViewed,dateFirstViewed,title,mainDesc,username) VALUES (?, Date("now"), Date("now"), ?, ?, ?)', [advertId, title, mainDesc, username],
-			null, function () {
+			function () { }, function (e) {
+				console.log('greska prilikom unosenja novog oglasa');
+				console.log(e);
 				//ako se dogodila greška, ne postoji kolona "dateFirstViewed" pa ju prvo dodaj nakon cega ponovi naredbu te updateataj kolonu "dateFirstViewied" za sve oglase
 				tx.executeSql('ALTER TABLE Advert ADD dateFirstViewed VARCHAR(15)', [],
 					function () {
@@ -112,8 +134,8 @@
 				tx.executeSql('ALTER TABLE Advert ADD username VARCHAR(50)', []);
 
 				setTimeout(function () {
-					insertNewPrice(advertId, priceHRK, priceEUR, title, keyIdentifier);
-				}, 1000)
+					insertNewAdvert(advertId, priceHRK, priceEUR, title, mainDesc, username);
+				}, 500)
 			});
 			tx.executeSql('INSERT INTO PriceHistory VALUES (?, ?, ?, Date("now"))', [advertId, priceHRK, priceEUR]);
 		});
@@ -188,6 +210,7 @@
 				},
 			function (e) {
 				console.log("error");
+				console.log(e);
 			}
 			);
 		});
@@ -224,6 +247,7 @@
 	}
 
 	return {
+		mergeAdverts: mergeAdverts,
 		insertNewPrice: insertNewPrice,
 		insertNewAdvert: insertNewAdvert,
 		getPriceHistory: getPriceHistory,

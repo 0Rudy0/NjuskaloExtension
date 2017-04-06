@@ -31,7 +31,8 @@
                 "css/morris.css",
                 "css/prettify.min.css",
                 "css/imageSlider.css",
-                "css/Njuskalo.css"
+                "css/Njuskalo.css",
+                "css/mergeModal.css"
             ],
             "js": [
                 "js/jquery.min.js",
