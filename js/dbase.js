@@ -46,7 +46,12 @@
 	var checkIfFakeNew = function (advertId, priceHRK, priceEUR, title, mainDesc, username, url, callback) {
 		//callback(null, { advertId: 3 });
 
-		//return;
+		//ako nema dovoljno elemenata u titleu (barem 5) za identicifirati oglas, jednostavno ga spremi kao novi
+		if ((title.match(new RegExp(';', 'g')) || []).length < 5) {
+			insertNewAdvert(advertId, priceHRK, priceEUR, title, mainDesc, username);
+			return;
+		}
+
 		db.transaction(function (tx) {
 			tx.executeSql('SELECT * from Advert where title = ?', [title], function (tx, result) {
 				if (result.rows.length > 0) {
@@ -54,7 +59,7 @@
 					for (var i = 0; i < withSameTitle.length; i++) {
 						var adv = withSameTitle[i];
 						if (adv.username == username) {
-						//if (adv.username != username) {
+							//if (adv.username != username) {
 							tx.executeSql('SELECT date, priceHRK, priceEUR FROM PriceHistory where advertId = ? ORDER BY date DESC', [adv.advertId], function (tx, result) {
 								var newAdvert = {
 									advertId: advertId,
@@ -98,7 +103,7 @@
 				}, 500)
 			});
 		});
-		
+
 	}
 
 	var mergeAdverts = function (oldAdvertId, newAdvertId, priceHRK, priceEUR, title, mainDesc, username) {
@@ -110,14 +115,14 @@
 			}, 500);
 		});
 	}
-	
+
 	var updateAdvertData = function (tx, advertId, title, mainDesc, username) {
 		tx.executeSql("UPDATE Advert SET dateLastViewed = DATE('now') where advertId = ?", [advertId]);
 		tx.executeSql("UPDATE Advert SET title = ? where advertId = ?", [title, advertId]);
 		tx.executeSql("UPDATE Advert SET mainDesc = ? where advertId = ?", [mainDesc, advertId]);
 		tx.executeSql("UPDATE Advert SET username = ? where advertId = ?", [username, advertId]);
 	}
-	
+
 	var insertNewAdvert = function (advertId, priceHRK, priceEUR, title, mainDesc, username) {
 		db.transaction(function (tx) {
 			tx.executeSql('INSERT INTO Advert (advertId,dateLastViewed,dateFirstViewed,title,mainDesc,username) VALUES (?, Date("now"), Date("now"), ?, ?, ?)', [advertId, title, mainDesc, username],
@@ -139,7 +144,7 @@
 			});
 			tx.executeSql('INSERT INTO PriceHistory VALUES (?, ?, ?, Date("now"))', [advertId, priceHRK, priceEUR]);
 		});
-		
+
 	}
 
 	var getPriceHistory = function (advertId, domItem) {
@@ -160,8 +165,8 @@
 			tx.executeSql('CREATE TABLE IF NOT EXISTS Advert (' +
 				'advertId integer unique primary key,' +
 				'dateLastViewed VARCHAR(80),' +
-				'title VARCHAR(120)' + 
-				'mainDesc VARCHAR(150)' + 
+				'title VARCHAR(120)' +
+				'mainDesc VARCHAR(150)' +
 				'username VARCHAR(50))'
 				);
 		});

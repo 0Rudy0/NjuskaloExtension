@@ -1,4 +1,15 @@
-﻿#priceListTable {
+﻿.BannerAboveHeader,
+.BannerWallpaper,
+.BannerWrapContent ,
+.content-aside,
+#adsense_adlist_bottom,
+#adsense_adlist_bottom_camao,
+#adsense_adlist_top_camao,
+#adsense_adlist_top   {
+	display: none !important;
+}
+
+#priceListTable {
 	width: 100%;
 }
 

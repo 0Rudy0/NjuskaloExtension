@@ -390,7 +390,10 @@ function formatMileageList(that) {
 	if (isNaN(mileage)) {
 		mileage = parseInt(element.html().substring(0, element.html().indexOf("<br>")).replace('Testno vozilo, ', '').replace(' km', '').trim());
 		if (isNaN(mileage)) {
-			return;
+			mileage = parseInt(element.html().substring(0, element.html().indexOf("<br>")).replace('Rabljeni motor, ', '').replace(' km', '').trim());
+			if (isNaN(mileage)) {
+				return;
+			}
 		}
 	}
 	element.html(element.html().replace(mileage, formatFloat(mileage, 0)));
