@@ -10,7 +10,8 @@
         "128": "icons/njuskalo_128.png"
     },
     "browser_action": {
-        "default_icon": "icons/njuskalo_thumb.png"
+        "default_icon": "icons/njuskalo_thumb.png",
+        "default_popup": "html/extensionPopup.html"
     },
     "permissions": [
         "activeTab"
@@ -55,5 +56,10 @@
         "*.png",
         "*.html",
         "*.woff2"
-    ]
+    ],
+
+    "background": {
+        "scripts": [ "js/background.js" ],
+        "persistent": false
+    }
 }

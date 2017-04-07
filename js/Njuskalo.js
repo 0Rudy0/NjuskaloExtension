@@ -21,8 +21,31 @@ var summary = {
 	newPrices: []
 };
 
-(function () {
+chrome.runtime.onMessage.addListener(
+  function (request, sender, sendResponse) {
+  	if (('.Pagination-item.Pagination-item--next button.Pagination-link').length > 0) {
+  		sessionStorage.setItem('autoPaging', true);
+  		$('.Pagination-item.Pagination-item--next button.Pagination-link').click();
+  	}
+  	else {
+  		sessionStorage.removeItem('autoPaging');
+  	}
 
+  });
+
+(function () {
+	if (sessionStorage.getItem("autoPaging")) {
+		setTimeout(function () {
+			if ($('.Pagination-item.Pagination-item--next button.Pagination-link').length > 0) {
+				if (!sessionStorage.getItem('pauseAutoPaging')) {
+					$('.Pagination-item.Pagination-item--next button.Pagination-link').click();
+				}
+			}
+			else {
+				sessionStorage.removeItem('autoPaging');
+			}
+		}, 4500);
+	}
 	if (usingDAL) {
 		msgPort = chrome.runtime.connect({ name: 'DAL' });
 		msgPort.onMessage.addListener(function (msg) {
@@ -276,7 +299,7 @@ function setAdditionalInfo(that, isLast) {
 	}
 
 	else {
-		that.isLast = isLast;		
+		that.isLast = isLast;
 		dbase.getPriceHistory(currID, that);
 	}
 
@@ -298,6 +321,7 @@ function setAdditionalInfo(that, isLast) {
 }
 
 function checkBeforeMerge(newAdvert, oldAdvert) {
+	sessionStorage.setItem('pauseAutoPaging', true);
 	$.get(chrome.extension.getURL('html/mergeModal.html'))
 	.done((function (data) {
 		data = data.replace('{modalID}', 'mergeModal' + oldAdvert.advertId);
@@ -339,16 +363,30 @@ function checkBeforeMerge(newAdvert, oldAdvert) {
 			$(mId).hide();
 			dbase.mergeAdverts(oldAdvert.advertId, newAdvert.advertId, newAdvert.priceHRK, newAdvert.priceEUR, newAdvert.title, newAdvert.mainDesc, newAdvert.username);
 			setTimeout(function () {
+				sessionStorage.removeItem('stopAutoPaging');
 				location.reload();
 			}, 100);
 		});
 		$(mId + ' .cancelMerge').click(function () {
 			$(mId).hide();
+			sessionStorage.removeItem('stopAutoPaging');
 			dbase.insertNewAdvert(newAdvert.advertId, newAdvert.priceHRK, newAdvert.priceEUR, newAdvert.title, newAdvert.mainDesc, newAdvert.username);
+
+			if (sessionStorage.getItem("autoPaging") && $('.Pagination-item.Pagination-item--next button.Pagination-link').length > 0) {
+				setTimeout(function () {
+					$('.Pagination-item.Pagination-item--next button.Pagination-link').click();
+				}, 100);
+			}
 		});
 		$(mId + ' .closeBtn').click(function () {
 			$(mId).hide();
-			//dbase.insertNewAdvert(newAdvert.advertId, newAdvert.priceHRK, newAdvert.priceEUR, newAdvert.title, newAdvert.mainDesc, newAdvert.username);
+			sessionStorage.removeItem('stopAutoPaging');
+
+			if (sessionStorage.getItem("autoPaging") && $('.Pagination-item.Pagination-item--next button.Pagination-link').length > 0) {
+				setTimeout(function () {
+					$('.Pagination-item.Pagination-item--next button.Pagination-link').click();
+				}, 100);
+			}
 		});
 	}));
 }
