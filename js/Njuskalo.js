@@ -16,6 +16,7 @@ var msgPort;
 var transferDataToBckgScript = false;
 var recreateTables = false;
 var usingDAL = false;
+var actionOnDuplicate = '';
 var summary = {
 	newAds: [],
 	newPrices: []
@@ -23,6 +24,9 @@ var summary = {
 
 chrome.runtime.onMessage.addListener(
   function (request, sender, sendResponse) {
+  	actionOnDuplicate = request;
+  	console.log(actionOnDuplicate);
+  	sessionStorage.setItem('actionOnDuplicate', actionOnDuplicate);
   	if (('.Pagination-item.Pagination-item--next button.Pagination-link').length > 0) {
   		sessionStorage.setItem('autoPaging', true);
   		$('.Pagination-item.Pagination-item--next button.Pagination-link').click();
@@ -30,11 +34,11 @@ chrome.runtime.onMessage.addListener(
   	else {
   		sessionStorage.removeItem('autoPaging');
   	}
-
   });
 
 (function () {
 	if (sessionStorage.getItem("autoPaging")) {
+		actionOnDuplicate = sessionStorage.getItem('actionOnDuplicate');
 		setTimeout(function () {
 			if ($('.Pagination-item.Pagination-item--next button.Pagination-link').length > 0) {
 				if (!sessionStorage.getItem('pauseAutoPaging')) {
@@ -44,7 +48,7 @@ chrome.runtime.onMessage.addListener(
 			else {
 				sessionStorage.removeItem('autoPaging');
 			}
-		}, 4500);
+		}, 5500);
 	}
 	if (usingDAL) {
 		msgPort = chrome.runtime.connect({ name: 'DAL' });
@@ -321,7 +325,7 @@ function setAdditionalInfo(that, isLast) {
 }
 
 function checkBeforeMerge(newAdvert, oldAdvert) {
-	sessionStorage.setItem('pauseAutoPaging', true);
+	console.log('found duplicate');
 	$.get(chrome.extension.getURL('html/mergeModal.html'))
 	.done((function (data) {
 		data = data.replace('{modalID}', 'mergeModal' + oldAdvert.advertId);
@@ -359,17 +363,45 @@ function checkBeforeMerge(newAdvert, oldAdvert) {
 		var priceEur = formatFloat(newAdvert.priceEUR, 0) + ' €';
 		$(mId + ' .rightContent ul.price-history').html('<li>' + priceHrk + ' ; ' + priceEur + '</li>');
 
+		if (sessionStorage.getItem('autoPaging') == "true") {
+			console.log(actionOnDuplicate);
+			switch (actionOnDuplicate) {
+				case 'stop':
+					sessionStorage.setItem('pauseAutoPaging', true);
+					console.log('auto paging - pause because of the duplicate');
+					break;
+				case 'insertAsNew':
+					console.log('auto paging - inserting as new');
+
+					dbase.insertNewAdvert(newAdvert.advertId, newAdvert.priceHRK, newAdvert.priceEUR, newAdvert.title, newAdvert.mainDesc, newAdvert.username);
+					if (sessionStorage.getItem("autoPaging") && $('.Pagination-item.Pagination-item--next button.Pagination-link').length > 0) {
+						setTimeout(function () {
+							$('.Pagination-item.Pagination-item--next button.Pagination-link').click();
+						}, 100);
+					}
+					break;
+				case 'merge':
+					console.log('auto paging - auto merging');
+
+					dbase.mergeAdverts(oldAdvert.advertId, newAdvert.advertId, newAdvert.priceHRK, newAdvert.priceEUR, newAdvert.title, newAdvert.mainDesc, newAdvert.username);
+					setTimeout(function () {
+						location.reload();
+					}, 100);
+					break;
+			}
+		}
+
 		$(mId + ' .acceptMerge').click(function () {
 			$(mId).hide();
 			dbase.mergeAdverts(oldAdvert.advertId, newAdvert.advertId, newAdvert.priceHRK, newAdvert.priceEUR, newAdvert.title, newAdvert.mainDesc, newAdvert.username);
 			setTimeout(function () {
-				sessionStorage.removeItem('stopAutoPaging');
+				sessionStorage.removeItem('pauseAutoPaging');
 				location.reload();
 			}, 100);
 		});
 		$(mId + ' .cancelMerge').click(function () {
 			$(mId).hide();
-			sessionStorage.removeItem('stopAutoPaging');
+			sessionStorage.removeItem('pauseAutoPaging');
 			dbase.insertNewAdvert(newAdvert.advertId, newAdvert.priceHRK, newAdvert.priceEUR, newAdvert.title, newAdvert.mainDesc, newAdvert.username);
 
 			if (sessionStorage.getItem("autoPaging") && $('.Pagination-item.Pagination-item--next button.Pagination-link').length > 0) {
@@ -380,7 +412,7 @@ function checkBeforeMerge(newAdvert, oldAdvert) {
 		});
 		$(mId + ' .closeBtn').click(function () {
 			$(mId).hide();
-			sessionStorage.removeItem('stopAutoPaging');
+			sessionStorage.removeItem('pauseAutoPaging');
 
 			if (sessionStorage.getItem("autoPaging") && $('.Pagination-item.Pagination-item--next button.Pagination-link').length > 0) {
 				setTimeout(function () {
@@ -389,6 +421,7 @@ function checkBeforeMerge(newAdvert, oldAdvert) {
 			}
 		});
 	}));
+
 }
 
 function setLoadingDiv(element, itemId) {

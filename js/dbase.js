@@ -126,9 +126,11 @@
 	var insertNewAdvert = function (advertId, priceHRK, priceEUR, title, mainDesc, username) {
 		db.transaction(function (tx) {
 			tx.executeSql('INSERT INTO Advert (advertId,dateLastViewed,dateFirstViewed,title,mainDesc,username) VALUES (?, Date("now"), Date("now"), ?, ?, ?)', [advertId, title, mainDesc, username],
-			function () { }, function (e) {
+			function () { }, function (e, a, b) {
 				console.log('greska prilikom unosenja novog oglasa');
 				console.log(e);
+				console.log(a);
+				console.log(b);
 				//ako se dogodila greška, ne postoji kolona "dateFirstViewed" pa ju prvo dodaj nakon cega ponovi naredbu te updateataj kolonu "dateFirstViewied" za sve oglase
 				tx.executeSql('ALTER TABLE Advert ADD dateFirstViewed VARCHAR(15)', [],
 					function () {
