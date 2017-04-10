@@ -484,41 +484,103 @@ function getAdditionalItemInfoCallback(response) {
 	var sideDescItems = [];
 	var concatTitle = '';
 	for (var j = 0; j < rows.length; j++) {
-		if ($($(rows[j]).find('th'))[0].innerHTML == 'Marka automobila:') {
-			concatTitle += $($(rows[j]).find('td'))[0].innerHTML + ';'
-		}
-		else if ($($(rows[j]).find('th'))[0].innerHTML == 'Model automobila:') {
-			concatTitle += $($(rows[j]).find('td'))[0].innerHTML + ';'
-		}
-		else if ($($(rows[j]).find('th'))[0].innerHTML == 'Tip automobila:') {
-			concatTitle += $($(rows[j]).find('td'))[0].innerHTML + ';'
-		}
-		else if ($($(rows[j]).find('th'))[0].innerHTML == 'Godina modela:') {
-			concatTitle += $($(rows[j]).find('td'))[0].innerHTML + ';'
-		}
-		else if ($($(rows[j]).find('th'))[0].innerHTML == 'Motor:') {
-			motor += $($(rows[j]).find('td'))[0].innerHTML + ' - ';
-			concatTitle += $($(rows[j]).find('td'))[0].innerHTML + ';'
-		}
-		else if ($($(rows[j]).find('th'))[0].innerHTML == 'Snaga motora:') {
-			motor += $($(rows[j]).find('td'))[0].innerHTML.replace(' <abbr title="kilovati">kW</abbr>', ' kWh');
-			var toHorsePower = parseInt($($(rows[j]).find('td'))[0].innerHTML.replace(' <abbr title="kilovati">kW</abbr>', '')) * 1.3428;
-			sideDescItems.push(motor + ' (' + Math.ceil(toHorsePower) + ' hp)');
+		//OSOBNI AUTOMOBILI
+		if ($('.breadcrumb-items li:nth-child(4) a.link').html() == 'Osobni automobili') {
+			if ($($(rows[j]).find('th'))[0].innerHTML == 'Marka automobila:') {
+				concatTitle += $($(rows[j]).find('td'))[0].innerHTML;
+			}
+			else if ($($(rows[j]).find('th'))[0].innerHTML == 'Model automobila:') {
+				concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
+			}
+			else if ($($(rows[j]).find('th'))[0].innerHTML == 'Tip automobila:') {
+				concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
+			}
+			else if ($($(rows[j]).find('th'))[0].innerHTML == 'Godina modela:') {
+				concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
+			}
+			else if ($($(rows[j]).find('th'))[0].innerHTML == 'Motor:') {
+				motor += $($(rows[j]).find('td'))[0].innerHTML + ' - ';
+				concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
+			}
+			else if ($($(rows[j]).find('th'))[0].innerHTML == 'Snaga motora:') {
+				motor += $($(rows[j]).find('td'))[0].innerHTML.replace(' <abbr title="kilovati">kW</abbr>', ' kWh');
+				var toHorsePower = parseInt($($(rows[j]).find('td'))[0].innerHTML.replace(' <abbr title="kilovati">kW</abbr>', '')) * 1.3428;
+				sideDescItems.push(motor + ' (' + Math.ceil(toHorsePower) + ' hp)');
 
-			concatTitle += $($(rows[j]).find('td'))[0].innerHTML.replace(' <abbr title="kilovati">kW</abbr>', 'kWh');
+				concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML.replace(' <abbr title="kilovati">kW</abbr>', 'kWh');
+			}
+			else if ($($(rows[j]).find('th'))[0].innerHTML == 'Mjenjač:') {
+				sideDescItems.push('Mjenjač: ' + $($(rows[j]).find('td'))[0].innerHTML);
+			}
+			else if ($($(rows[j]).find('th'))[0].innerHTML == 'Vlasnik:') {
+				sideDescItems.push('Vlasnik: ' + $($(rows[j]).find('td'))[0].innerHTML);
+			}
+
+			
 		}
-		else if ($($(rows[j]).find('th'))[0].innerHTML == 'Mjenjač:') {
-			sideDescItems.push('Mjenjač: ' + $($(rows[j]).find('td'))[0].innerHTML);
+
+			//MOTORI
+		else if ($('.breadcrumb-items li:nth-child(4) a.link').html() == 'Motocikli / Motori') {
+			if ($($(rows[j]).find('th'))[0].innerHTML == 'Marka:') {
+				concatTitle += $($(rows[j]).find('td'))[0].innerHTML;
+			}
+			else if ($($(rows[j]).find('th'))[0].innerHTML == 'Model:') {
+				concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
+			}
+			else if ($($(rows[j]).find('th'))[0].innerHTML == 'Snaga motora:') {
+				motor += $($(rows[j]).find('td'))[0].innerHTML.replace(' <abbr title="kilovati">kW</abbr>', ' kWh');
+				var toHorsePower = parseInt($($(rows[j]).find('td'))[0].innerHTML.replace(' <abbr title="kilovati">kW</abbr>', '')) * 1.3428;
+				sideDescItems.push(motor + ' (' + Math.ceil(toHorsePower) + ' hp)');
+
+				concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML.replace(' <abbr title="kilovati">kW</abbr>', 'kWh');
+			}
+			else if ($($(rows[j]).find('th'))[0].innerHTML == 'Boja:') {
+				concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
+			}
+			else if ($($(rows[j]).find('th'))[0].innerHTML == 'Vlasnik:') {
+				sideDescItems.push('Vlasnik: ' + $($(rows[j]).find('td'))[0].innerText);
+				concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
+			}
+			else if ($($(rows[j]).find('th'))[0].innerHTML == 'Godina proizvodnje:') {
+				concatTitle += ';' + $($(rows[j]).find('td time'))[0].innerHTML;
+			}
 		}
-		else if ($($(rows[j]).find('th'))[0].innerHTML == 'Vlasnik:') {
-			sideDescItems.push('Vlasnik: ' + $($(rows[j]).find('td'))[0].innerHTML);
+
+			//STAMBENO
+		else if ($('.breadcrumb-items li:nth-child(3) a.link').html() == 'Nekretnine') {
+			if ($($(rows[j]).find('th'))[0].innerHTML == 'Županija:') {
+				concatTitle += $($(rows[j]).find('td'))[0].innerHTML;
+			}
+			else if ($($(rows[j]).find('th'))[0].innerHTML == 'Grad/Općina:') {
+				concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
+			}
+			else if ($($(rows[j]).find('th'))[0].innerHTML == 'Naselje') {
+				concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
+			}
+			else if ($($(rows[j]).find('th'))[0].innerHTML == 'Tip stana:') {
+				concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
+			}
+			else if ($($(rows[j]).find('th'))[0].innerHTML == 'Tip kuće:') {
+				concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
+			}
+			else if ($($(rows[j]).find('th'))[0].innerHTML == 'Broj etaža:') {
+				sideDescItems.push('Broj etaža: ' + $($(rows[j]).find('td'))[0].innerText);
+				concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
+			}
+			else if ($($(rows[j]).find('th'))[0].innerHTML == 'Broj soba:') {
+				sideDescItems.push('Broj soba: ' + $($(rows[j]).find('td'))[0].innerText);
+				concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
+			}
+			else if ($($(rows[j]).find('th'))[0].innerHTML == 'Stambena površina:') {
+				concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
+			}
+			else if ($($(rows[j]).find('th'))[0].innerHTML == 'Godina izgradnje:') {
+				sideDescItems.push('Godina izgradnje: ' + $($(rows[j]).find('td'))[0].innerText);
+				concatTitle += ';' + $($(rows[j]).find('td time'))[0].innerHTML;
+			}
+
 		}
-		else if ($($(rows[j]).find('th'))[0].innerHTML == 'Godina izgradnje:') {
-			sideDescItems.push('Godina izgradnje: ' + $($(rows[j]).find('td'))[0].innerText);
-		}
-		else if ($($(rows[j]).find('th'))[0].innerHTML == 'Broj soba:') {
-			sideDescItems.push('Broj soba: ' + $($(rows[j]).find('td'))[0].innerText);
-		}
+
 	}
 
 	if ($(response).find('.Profile-wrapUsername>a.link')[0].innerHTML.trim() == 'Posjetite ovu Njuškalo trgovinu') {
@@ -554,21 +616,28 @@ function getAdditionalItemInfoCallback(response) {
 	var prices = getPrices(this);
 	var mainDesc = $(this).find('.entity-description-main').html().trim();
 
-	var extraInfo = $(response).find('.passage-standard h3');
-	for (var i = 0; i < extraInfo.length; i++) {
-		if ($(extraInfo[i]).html() == 'Dodatni podaci:') {
-			var lis = $(extraInfo[i]).next().find('li');
-			for (var j = 0; j < lis.length; j++) {
-				if ($(lis[j]).html().indexOf('Boja') > -1) {
-					concatTitle += ';' + $(lis[j]).html().replace('Boja: ', '');
-					//console.log($(lis[j]).html().replace('Boja: ', ''));
-					dbase.insertNewPrice(currID, prices.priceHRK, prices.priceEUR, concatTitle, mainDesc, username, this.url, checkBeforeMerge);
-					return;
+	if ($('.breadcrumb-items li:nth-child(4) a.link').html() == 'Osobni automobili') {
+		var extraInfo = $(response).find('.passage-standard h3');
+		var exit = false;
+		for (var i = 0; i < extraInfo.length; i++) {
+			if ($(extraInfo[i]).html() == 'Dodatni podaci:') {
+				var lis = $(extraInfo[i]).next().find('li');
+				for (var k = 0; k < lis.length; k++) {
+					if ($(lis[k]).html().indexOf('Boja') > -1) {
+						concatTitle += ';' + $(lis[k]).html().replace('Boja: ', '');
+						//console.log($(lis[j]).html().replace('Boja: ', ''));
+						exit = true;
+						break;;
+					}
+				}
+				if (exit) {
+					break;
 				}
 			}
 		}
 	}
-
+	
+	dbase.insertNewPrice(currID, prices.priceHRK, prices.priceEUR, concatTitle, mainDesc, username, this.url, checkBeforeMerge);
 }
 
 function embedPriceHistory(jQueryElement, priceHistory, itemId) {

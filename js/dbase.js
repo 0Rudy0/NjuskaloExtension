@@ -4,6 +4,7 @@
 	var allFinished = [];
 
 	var insertNewPrice = function (advertId, priceHRK, priceEUR, title, mainDesc, username, url, callback) {
+		console.log(title);
 		db.transaction(function (tx) {
 			//checkIfFakeNew(tx, advertId, priceHRK, priceEUR, title, mainDesc, username, url, callback);
 			//return;
