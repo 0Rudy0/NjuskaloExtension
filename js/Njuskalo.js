@@ -520,7 +520,7 @@ function getAdditionalItemInfoCallback(response) {
 		}
 
 			//MOTORI
-		else if ($('.breadcrumb-items li:nth-child(4) a.link').html() == 'Motocikli / Motori') {
+		else if ($('.breadcrumb-items li:nth-child(4) a.link').html().indexOf('Motocikli / Motori') > -1) {
 			if ($($(rows[j]).find('th'))[0].innerHTML == 'Marka:') {
 				concatTitle += $($(rows[j]).find('td'))[0].innerHTML;
 			}
@@ -547,7 +547,7 @@ function getAdditionalItemInfoCallback(response) {
 		}
 
 			//STAMBENO
-		else if ($('.breadcrumb-items li:nth-child(3) a.link').html() == 'Nekretnine') {
+		else if ($('.breadcrumb-items li:nth-child(3) a.link').html().indexOf('Nekretnine') > -1) {
 			if ($($(rows[j]).find('th'))[0].innerHTML == 'Županija:') {
 				concatTitle += $($(rows[j]).find('td'))[0].innerHTML;
 			}
