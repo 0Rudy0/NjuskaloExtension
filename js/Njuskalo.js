@@ -485,7 +485,7 @@ function getAdditionalItemInfoCallback(response) {
 	var concatTitle = '';
 	for (var j = 0; j < rows.length; j++) {
 		//OSOBNI AUTOMOBILI
-		if ($('.breadcrumb-items li:nth-child(4) a.link').html() == 'Osobni automobili') {
+		if ($('.breadcrumb-items li:nth-child(4) a.link').html().indexOf('Osobni automobili') > -1) {
 			if ($($(rows[j]).find('th'))[0].innerHTML == 'Marka automobila:') {
 				concatTitle += $($(rows[j]).find('td'))[0].innerHTML;
 			}
