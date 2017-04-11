@@ -29,8 +29,8 @@
                 "http://www.njuskalo.hr/prodaja-stanova*",
                 "http://www.njuskalo.hr/nekretnine*",
                 "http://www.njuskalo.hr/novogradnja*",
-                "http://www.njuskalo.hr/?ctl=browse_ads&sort=new&categoryId=9580*",
-                "http://www.njuskalo.hr/?ctl=browse_ads&sort=new&categoryId=9579*"
+                "http://www.njuskalo.hr/*&categoryId=9580&*",
+                "http://www.njuskalo.hr/*&categoryId=9579&*"
             ],
             "css": [
                 "css/morris.css",
