@@ -24,32 +24,52 @@ var summary = {
 
 chrome.runtime.onMessage.addListener(
   function (request, sender, sendResponse) {
-  	actionOnDuplicate = request;
-  	console.log(actionOnDuplicate);
-  	sessionStorage.setItem('actionOnDuplicate', actionOnDuplicate);
-  	if (('.Pagination-item.Pagination-item--next button.Pagination-link').length > 0) {
-  		sessionStorage.setItem('autoPaging', true);
-  		$('.Pagination-item.Pagination-item--next button.Pagination-link').click();
+  	if (request.action == 'start') {
+  		actionOnDuplicate = request.onDuplicate;
+  		//console.log(actionOnDuplicate);
+  		sessionStorage.setItem('actionOnDuplicate', actionOnDuplicate);
+  		if ($('.Pagination-item.Pagination-item--next .Pagination-link').length > 0) {
+  			sessionStorage.setItem('autoPaging', true);
+  			$('.Pagination-item.Pagination-item--next .Pagination-link').click();
+  		}
+  		else {
+  			sessionStorage.removeItem('autoPaging');
+  			setTimeout(function () {
+  				chrome.runtime.sendMessage('stop', function (response) {
+  					//console.log(response.farewell);
+  				});
+  			}, 300);
+  		}
   	}
-  	else {
+  	else if (request.action == 'stop') {
+  		sessionStorage.setItem('pauseAutoPaging', true);
   		sessionStorage.removeItem('autoPaging');
-  	}
+  		
+  	}  	
   });
 
 (function () {
+	sessionStorage.removeItem('pauseAutoPaging');
 	if (sessionStorage.getItem("autoPaging")) {
 		actionOnDuplicate = sessionStorage.getItem('actionOnDuplicate');
 		setTimeout(function () {
-			if ($('.Pagination-item.Pagination-item--next button.Pagination-link').length > 0) {
+			if ($('.Pagination-item.Pagination-item--next .Pagination-link').length > 0) {
 				if (!sessionStorage.getItem('pauseAutoPaging')) {
-					$('.Pagination-item.Pagination-item--next button.Pagination-link').click();
+					$('.Pagination-item.Pagination-item--next .Pagination-link').click();
 				}
 			}
 			else {
 				sessionStorage.removeItem('autoPaging');
+				
 			}
 		}, 5500);
 	}
+	if ($('.Pagination-item.Pagination-item--next .Pagination-link').length == 0) {
+		chrome.runtime.sendMessage('stop', function (response) {
+			//console.log(response.farewell);
+		});
+	}
+
 	if (usingDAL) {
 		msgPort = chrome.runtime.connect({ name: 'DAL' });
 		msgPort.onMessage.addListener(function (msg) {
@@ -336,6 +356,7 @@ function checkBeforeMerge(newAdvert, oldAdvert) {
 		while (title.indexOf(';') > 0) {
 			title = title.replace(';', '<br/>');
 		}
+		$(mId + ' .leftContent h3').html($(mId + ' .leftContent h3').html() + ' (ID: ' + oldAdvert.advertId + ')');
 		$(mId + ' .leftContent .title').html(title);
 		$(mId + ' .leftContent a.username').html(oldAdvert.username);
 		$(mId + ' .leftContent a.username').attr('href', 'http://www.njuskalo.hr' + oldAdvert.username);
@@ -354,6 +375,8 @@ function checkBeforeMerge(newAdvert, oldAdvert) {
 		while (title.indexOf(';') > 0) {
 			title = title.replace(';', '<br/>');
 		}
+
+		$(mId + ' .rightContent h3').html($(mId + ' .rightContent h3').html() + ' (ID: ' + newAdvert.advertId + ')');
 		$(mId + ' .rightContent .title').html(title);
 		$(mId + ' .rightContent a.newAdvLink').attr('href', newAdvert.url)
 		$(mId + ' .rightContent a.username').html(newAdvert.username);
@@ -374,9 +397,9 @@ function checkBeforeMerge(newAdvert, oldAdvert) {
 					console.log('auto paging - inserting as new');
 
 					dbase.insertNewAdvert(newAdvert.advertId, newAdvert.priceHRK, newAdvert.priceEUR, newAdvert.title, newAdvert.mainDesc, newAdvert.username);
-					if (sessionStorage.getItem("autoPaging") && $('.Pagination-item.Pagination-item--next button.Pagination-link').length > 0) {
+					if (sessionStorage.getItem("autoPaging") && $('.Pagination-item.Pagination-item--next .Pagination-link').length > 0) {
 						setTimeout(function () {
-							$('.Pagination-item.Pagination-item--next button.Pagination-link').click();
+							$('.Pagination-item.Pagination-item--next .Pagination-link').click();
 						}, 100);
 					}
 					break;
@@ -404,9 +427,9 @@ function checkBeforeMerge(newAdvert, oldAdvert) {
 			sessionStorage.removeItem('pauseAutoPaging');
 			dbase.insertNewAdvert(newAdvert.advertId, newAdvert.priceHRK, newAdvert.priceEUR, newAdvert.title, newAdvert.mainDesc, newAdvert.username);
 
-			if (sessionStorage.getItem("autoPaging") && $('.Pagination-item.Pagination-item--next button.Pagination-link').length > 0) {
+			if (sessionStorage.getItem("autoPaging") && $('.Pagination-item.Pagination-item--next .Pagination-link').length > 0) {
 				setTimeout(function () {
-					$('.Pagination-item.Pagination-item--next button.Pagination-link').click();
+					$('.Pagination-item.Pagination-item--next .Pagination-link').click();
 				}, 100);
 			}
 		});
@@ -414,9 +437,9 @@ function checkBeforeMerge(newAdvert, oldAdvert) {
 			$(mId).hide();
 			sessionStorage.removeItem('pauseAutoPaging');
 
-			if (sessionStorage.getItem("autoPaging") && $('.Pagination-item.Pagination-item--next button.Pagination-link').length > 0) {
+			if (sessionStorage.getItem("autoPaging") && $('.Pagination-item.Pagination-item--next .Pagination-link').length > 0) {
 				setTimeout(function () {
-					$('.Pagination-item.Pagination-item--next button.Pagination-link').click();
+					$('.Pagination-item.Pagination-item--next .Pagination-link').click();
 				}, 100);
 			}
 		});
