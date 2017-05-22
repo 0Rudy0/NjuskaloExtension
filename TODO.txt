@@ -1,7 +1,0 @@
-﻿//- DAL implementacija
-- popup s ukljucivanjem / iskljucivanjem featurea (auto pager recimo)
-- tekstualni opis u modalni dijalog
-- boje crta na grafu (zeleno je minus, crveno je plus)
-- boje promjena cijena (isto kao gore)
-- linkovi na popup info
-- prepoznati novi oglas ako je samo ponovno objavljen

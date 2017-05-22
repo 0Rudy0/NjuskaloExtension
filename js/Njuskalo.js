@@ -571,13 +571,13 @@ function getAdditionalItemInfoCallback(response) {
 
 			//STAMBENO
 		else if ($('.breadcrumb-items li:nth-child(3) a.link').html().indexOf('Nekretnine') > -1) {
-			if ($($(rows[j]).find('th'))[0].innerHTML == 'Županija:') {
+			//if ($($(rows[j]).find('th'))[0].innerHTML == 'Županija:') {
+			//	concatTitle += $($(rows[j]).find('td'))[0].innerHTML;
+			//}
+			if ($($(rows[j]).find('th'))[0].innerHTML == 'Grad/Općina:') {
 				concatTitle += $($(rows[j]).find('td'))[0].innerHTML;
 			}
-			else if ($($(rows[j]).find('th'))[0].innerHTML == 'Grad/Općina:') {
-				concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
-			}
-			else if ($($(rows[j]).find('th'))[0].innerHTML == 'Naselje') {
+			else if ($($(rows[j]).find('th'))[0].innerHTML == 'Naselje:') {
 				concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
 			}
 			else if ($($(rows[j]).find('th'))[0].innerHTML == 'Tip stana:') {
@@ -588,10 +588,16 @@ function getAdditionalItemInfoCallback(response) {
 			}
 			else if ($($(rows[j]).find('th'))[0].innerHTML == 'Broj etaža:') {
 				sideDescItems.push('Broj etaža: ' + $($(rows[j]).find('td'))[0].innerText);
-				concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
+				//concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
 			}
 			else if ($($(rows[j]).find('th'))[0].innerHTML == 'Broj soba:') {
 				sideDescItems.push('Broj soba: ' + $($(rows[j]).find('td'))[0].innerText);
+				concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
+			}
+			else if ($($(rows[j]).find('th'))[0].innerHTML == 'Kat:') {
+				concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
+			}
+			else if ($($(rows[j]).find('th'))[0].innerHTML == 'Šifra objekta:') {
 				concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
 			}
 			else if ($($(rows[j]).find('th'))[0].innerHTML == 'Stambena površina:') {
@@ -599,7 +605,7 @@ function getAdditionalItemInfoCallback(response) {
 			}
 			else if ($($(rows[j]).find('th'))[0].innerHTML == 'Godina izgradnje:') {
 				sideDescItems.push('Godina izgradnje: ' + $($(rows[j]).find('td'))[0].innerText);
-				concatTitle += ';' + $($(rows[j]).find('td time'))[0].innerHTML;
+				concatTitle += ';' + $($(rows[j]).find('td'))[0].innerText;
 			}
 
 		}
