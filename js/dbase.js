@@ -4,7 +4,7 @@
 	var allFinished = [];
 
 	var insertNewPrice = function (advertId, priceHRK, priceEUR, title, mainDesc, username, url, callback) {
-		console.log(title);
+		//console.log(title);
 		db.transaction(function (tx) {
 			//checkIfFakeNew(tx, advertId, priceHRK, priceEUR, title, mainDesc, username, url, callback);
 			//return;
@@ -111,8 +111,8 @@
 
 	var mergeAdverts = function (oldAdvertId, newAdvertId, priceHRK, priceEUR, title, mainDesc, username) {
 		db.transaction(function (tx) {
-		    tx.executeSql('UPDATE Advert set advertId = ? where advertId = ?', [newAdvertId, oldAdvertId], function (tx) { console.log('error'); }, function (tx) { console.log('success updated Advert table'); });
-		    tx.executeSql('UPDATE PriceHistory set advertId = ? where advertId = ?', [newAdvertId, oldAdvertId], function (tx) { console.log('error'); }, function (tx) { console.log('success updated PriceHistory table'); });
+		    tx.executeSql('UPDATE Advert set advertId = ? where advertId = ?', [newAdvertId, oldAdvertId], function (tx) { console.log('error updating'); });
+		    tx.executeSql('UPDATE PriceHistory set advertId = ? where advertId = ?', [newAdvertId, oldAdvertId], function (tx) { console.log('error updating'); });
 			setTimeout(function () {
 				insertNewPrice(newAdvertId, priceHRK, priceEUR, title, mainDesc, username, null, null);
 			}, 500);
@@ -127,7 +127,7 @@
 	}
 
 	var insertNewAdvert = function (advertId, priceHRK, priceEUR, title, mainDesc, username) {
-	    console.log('inserted ' + advertId);
+	    //console.log('inserted ' + advertId);
 		db.transaction(function (tx) {
 			tx.executeSql('INSERT INTO Advert (advertId,dateLastViewed,dateFirstViewed,title,mainDesc,username) VALUES (?, Date("now"), Date("now"), ?, ?, ?)', [advertId, title, mainDesc, username],
 			function () { }, function (e, a, b) {

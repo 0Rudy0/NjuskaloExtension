@@ -345,7 +345,7 @@ function setAdditionalInfo(that, isLast) {
 }
 
 function checkBeforeMerge(newAdvert, oldAdvert) {
-	console.log('found duplicate');
+	//console.log('found duplicate');
 	$.get(chrome.extension.getURL('html/mergeModal.html'))
 	.done((function (data) {
 		data = data.replace('{modalID}', 'mergeModal' + oldAdvert.advertId);
@@ -387,7 +387,7 @@ function checkBeforeMerge(newAdvert, oldAdvert) {
 		$(mId + ' .rightContent ul.price-history').html('<li>' + priceHrk + ' ; ' + priceEur + '</li>');
 
 		if (sessionStorage.getItem('autoPaging') == "true") {
-			console.log(actionOnDuplicate);
+			//console.log(actionOnDuplicate);
 			switch (actionOnDuplicate) {
 				case 'stop':
 					sessionStorage.setItem('pauseAutoPaging', true);
