@@ -408,7 +408,7 @@ function checkBeforeMerge(newAdvert, oldAdvert) {
 
 					dbase.mergeAdverts(oldAdvert.advertId, newAdvert.advertId, newAdvert.priceHRK, newAdvert.priceEUR, newAdvert.title, newAdvert.mainDesc, newAdvert.username);
 					setTimeout(function () {
-						location.reload();
+						//location.reload();
 					}, 100);
 					break;
 			}

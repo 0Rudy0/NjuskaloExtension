@@ -56,10 +56,12 @@
 		db.transaction(function (tx) {
 			tx.executeSql('SELECT * from Advert where title = ?', [title], function (tx, result) {
 				if (result.rows.length > 0) {
-					var withSameTitle = result.rows;
+				    var withSameTitle = result.rows;
+				    var found = false;
 					for (var i = 0; i < withSameTitle.length; i++) {
 						var adv = withSameTitle[i];
 						if (adv.username == username) {
+						    found = true;
 							//if (adv.username != username) {
 							tx.executeSql('SELECT date, priceHRK, priceEUR FROM PriceHistory where advertId = ? ORDER BY date DESC', [adv.advertId], function (tx, result) {
 								var newAdvert = {
@@ -83,9 +85,9 @@
 								callback(newAdvert, oldAdvert);
 							});
 						}
-						else {
-							insertNewAdvert(advertId, priceHRK, priceEUR, title, mainDesc, username);
-						}
+					}
+					if (!found) {
+					    insertNewAdvert(advertId, priceHRK, priceEUR, title, mainDesc, username);
 					}
 				}
 				else {
@@ -109,8 +111,8 @@
 
 	var mergeAdverts = function (oldAdvertId, newAdvertId, priceHRK, priceEUR, title, mainDesc, username) {
 		db.transaction(function (tx) {
-			tx.executeSql('UPDATE Advert set advertId = ? where advertId = ?', [newAdvertId, oldAdvertId]);
-			tx.executeSql('UPDATE PriceHistory set advertId = ? where advertId = ?', [newAdvertId, oldAdvertId]);
+		    tx.executeSql('UPDATE Advert set advertId = ? where advertId = ?', [newAdvertId, oldAdvertId], function (tx) { console.log('error'); }, function (tx) { console.log('success updated Advert table'); });
+		    tx.executeSql('UPDATE PriceHistory set advertId = ? where advertId = ?', [newAdvertId, oldAdvertId], function (tx) { console.log('error'); }, function (tx) { console.log('success updated PriceHistory table'); });
 			setTimeout(function () {
 				insertNewPrice(newAdvertId, priceHRK, priceEUR, title, mainDesc, username, null, null);
 			}, 500);
@@ -125,6 +127,7 @@
 	}
 
 	var insertNewAdvert = function (advertId, priceHRK, priceEUR, title, mainDesc, username) {
+	    console.log('inserted ' + advertId);
 		db.transaction(function (tx) {
 			tx.executeSql('INSERT INTO Advert (advertId,dateLastViewed,dateFirstViewed,title,mainDesc,username) VALUES (?, Date("now"), Date("now"), ?, ?, ?)', [advertId, title, mainDesc, username],
 			function () { }, function (e, a, b) {
