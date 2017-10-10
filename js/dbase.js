@@ -288,32 +288,50 @@
 	    var lines = csvData.split('\n');
 	    for (var i = 1; i < lines.length; i++) {
 	        var data = lines[i].split(';');
-	        db.transaction(function (tx) {
-	            tx.executeSql('INSERT INTO Advert (advertId,dateLastViewed,dateFirstViewed,title,mainDesc,username) VALUES (?, ?, ?, ?, ?, ?)', [parseInt(data[0]), new Date(data[1]), new Date(data[2]), data[3], data[4], data[5]],
-			        function () {
-			            console.log('importiran oglas');
-			        }, function (e, a, b) {
-			            console.log('greska prilikom unosenja novog oglasa');
-			            console.log(a);
-			        });
-	        });
+	        data.index = i;
+	        data.maxIndex = lines.length;
+	        db.transaction(insertAdvertTransaction.bind(data));
 	    }
+	}
+
+	var insertAdvertTransaction = function (tx) {
+	    var data = this;
+	    //console.log(parseInt(data[0]) + ';' + new Date(data[1]) + ';' + new Date(data[2]) + ';' + data[3] + ';' + data[4] + ';' + data[5]);
+	    tx.executeSql('INSERT INTO Advert (advertId,dateLastViewed,dateFirstViewed,title,mainDesc,username) VALUES (?, ?, ?, ?, ?, ?)', [parseInt(data[0]), new Date(data[1]), new Date(data[2]), data[3], data[4], data[5]],
+           printStatus.bind(data, 'oglasi: '),
+           function (e, a, b) {
+                console.log('greska prilikom unosenja novog oglasa');
+                console.log(a);
+        });
 	}
 
 	var insertPricesBulk = function (csvData) {
 	    var lines = csvData.split('\n');
 	    for (var i = 1; i < lines.length; i++) {
 	        var data = lines[i].split(';');
-	        db.transaction(function (tx) {
-	            tx.executeSql('INSERT INTO PriceHistory VALUES (?, ?, ?, ?)', [data[0], data[1], data[2], data[3]],
-                    function () {
-                        console.log('importirana cijena');
-                    },
-                    function (e, a, b) {
-                        console.log('greska prilikom unosenja cijene');
-                        console.log(a);
-                    });
-	        });
+	        data.index = i;
+	        data.maxIndex = lines.length;
+	        db.transaction(insertPriceTransaction.bind(data));
+	    }
+	}
+
+	var insertPriceTransaction = function (tx) {
+	    var data = this;
+	    tx.executeSql('INSERT INTO PriceHistory VALUES (?, ?, ?, ?)', [data[0], data[1], data[2], data[3]],
+            printStatus.bind(data, 'cijene: '),
+            function (e, a, b) {
+                console.log('greska prilikom unosenja cijene');
+                console.log(a);
+        });
+	}
+
+	var printStatus = function (str) {
+	    var max = this.maxIndex;
+	    var i = this.index;
+	    if (i % 20 == 0)
+	        console.log(str + Math.ceil(i / max * 100) + '%');
+	    if (i == max - 1) {
+	        console.log(str + 'GOTOVO');
 	    }
 	}
 
