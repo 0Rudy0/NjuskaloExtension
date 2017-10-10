@@ -3,7 +3,7 @@
 
     "name": "Njuskalo enhancer",
     "description": "Enhancing Njuskalo experience, price tracking.",
-    "version": "1.2.6",
+    "version": "1.3.0",
     "icons": {
         "16": "icons/njuskalo_16.png",
         "48": "icons/njuskalo_48.png",
@@ -25,6 +25,8 @@
                 "http://www.njuskalo.hr/sportski-motori*",
                 "http://www.njuskalo.hr/cestovni-motori*",
                 "http://www.njuskalo.hr/auti*",
+                "http://www.njuskalo.hr/rabljeni-auti*",
+                "http://www.njuskalo.hr/novi-auti*",
                 "http://www.njuskalo.hr/karambolirani-auti*",
                 "http://www.njuskalo.hr/prodaja-kuca*",
                 "http://www.njuskalo.hr/prodaja-stanova*",
@@ -47,6 +49,7 @@
                 "js/morris.min.js",
                 "js/prettify.min.js",
                 "js/dbase.js",
+                "js/csvExport.js",
                 "js/jssor.slider.min.js",
                 "js/imageSliderInit.js",
                 "js/Njuskalo.js"

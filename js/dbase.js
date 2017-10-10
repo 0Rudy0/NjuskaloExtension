@@ -171,29 +171,56 @@
 			tx.executeSql('CREATE TABLE IF NOT EXISTS Advert (' +
 				'advertId integer unique primary key,' +
 				'dateLastViewed VARCHAR(80),' +
-				'title VARCHAR(120)' +
-				'mainDesc VARCHAR(150)' +
-				'username VARCHAR(50))'
-				);
+                'dateFirstViewed VARCHAR(80),' +
+				'title VARCHAR(120),' +
+				'mainDesc VARCHAR(150),' +
+				'username VARCHAR(50))', null, function () {
+				    console.log('success creating Advert table');
+				},
+            function (err) {
+                console.log('error creating Advert table');
+            });
 		});
-		db.transaction(function (tx) {
-			tx.executeSql('CREATE TABLE IF NOT EXISTS PriceHistory (' +
-				'advertId integer,' +
-				'priceHRK integer,' +
-				'priceEUR integer,' +
-				'date VARCHAR(15),' +
-				'FOREIGN KEY (advertId) REFERENCES Advert (advertId))'
-				);
-		});
+		setTimeout(function () {
+		    db.transaction(function (tx) {
+		        tx.executeSql('CREATE TABLE IF NOT EXISTS PriceHistory (' +
+                    'advertId integer,' +
+                    'priceHRK integer,' +
+                    'priceEUR integer,' +
+                    'date VARCHAR(15),' +
+                    'FOREIGN KEY (advertId) REFERENCES Advert (advertId))', null, function () {
+                        console.log('success creating PriceHistory table');
+                    },
+                function (err) {
+                    console.log('error creating PriceHistory table');
+                });
+		    });
+		}, 100);
+		
 	}
 
 	var deleteTables = function () {
-		db.transaction(function (tx) {
-			tx.executeSql('DROP TABLE Advert');
-		});
-		db.transaction(function (tx) {
-			tx.executeSql('DROP TABLE PriceHistory');
-		});
+
+	    db.transaction(function (tx) {
+	        tx.executeSql('DROP TABLE PriceHistory', null, function () {
+	            console.log('success deleting PriceHistory table');
+	        },
+            function (err) {
+                console.log('error deleting PriceHistory table');
+            });
+	    });
+
+	    setTimeout(function () {
+	        db.transaction(function (tx) {
+	            tx.executeSql('DROP TABLE Advert', null, function () {
+	                console.log('success deleting Advert table');
+	            },
+                function (err) {
+                    console.log('error deleting Advert table');
+                });
+	        });
+	    }, 100);
+		
 	}
 
 	var deleteOldAds = function (numOfMonthsOld) {
@@ -257,6 +284,39 @@
 		});
 	}
 
+	var insertAdvertsBulk = function (csvData) {
+	    var lines = csvData.split('\n');
+	    for (var i = 1; i < lines.length; i++) {
+	        var data = lines[i].split(';');
+	        db.transaction(function (tx) {
+	            tx.executeSql('INSERT INTO Advert (advertId,dateLastViewed,dateFirstViewed,title,mainDesc,username) VALUES (?, ?, ?, ?, ?, ?)', [parseInt(data[0]), new Date(data[1]), new Date(data[2]), data[3], data[4], data[5]],
+			        function () {
+			            console.log('importiran oglas');
+			        }, function (e, a, b) {
+			            console.log('greska prilikom unosenja novog oglasa');
+			            console.log(a);
+			        });
+	        });
+	    }
+	}
+
+	var insertPricesBulk = function (csvData) {
+	    var lines = csvData.split('\n');
+	    for (var i = 1; i < lines.length; i++) {
+	        var data = lines[i].split(';');
+	        db.transaction(function (tx) {
+	            tx.executeSql('INSERT INTO PriceHistory VALUES (?, ?, ?, ?)', [data[0], data[1], data[2], data[3]],
+                    function () {
+                        console.log('importirana cijena');
+                    },
+                    function (e, a, b) {
+                        console.log('greska prilikom unosenja cijene');
+                        console.log(a);
+                    });
+	        });
+	    }
+	}
+
 	return {
 		mergeAdverts: mergeAdverts,
 		insertNewPrice: insertNewPrice,
@@ -268,6 +328,8 @@
 		getNumOfOldAds: getNumOfOldAds,
 		getNumOfAllAds: getNumOfAllAds,
 		getAllAdverts: getAllAdverts,
-		getAllAdvertPrices: getAllAdvertPrices
+		getAllAdvertPrices: getAllAdvertPrices,
+		insertAdvertsBulk: insertAdvertsBulk,
+		insertPricesBulk: insertPricesBulk
 	};
 })();

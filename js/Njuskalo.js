@@ -14,7 +14,7 @@ var messages = {
 
 var msgPort;
 var transferDataToBckgScript = false;
-var recreateTables = false;
+var recreateTables = true;
 var usingDAL = false;
 var actionOnDuplicate = '';
 var summary = {
@@ -49,6 +49,37 @@ chrome.runtime.onMessage.addListener(
   });
 
 (function () {
+    //dbase.deleteTables();
+    //setTimeout(function () {
+    //    dbase.createTables();
+    //}, 1500);
+     dbase.createTables();
+    //return;
+     $('.UserNav-auth .UserNav-items').append('<li class="UserNav-item"><a href="#" class="item-bit link backupSqlData">Backupiraj podatke</a></li>');
+     $('.UserNav-auth .UserNav-items').append('<li class="UserNav-item"><a href="#" class="item-bit link importSqlData">Import</a></li>');
+     $('..UserNav-auth .UserNav-items .backupSqlData').click(function () {
+         createCsvOfSqlData();
+     });
+     $('..UserNav-auth .UserNav-items .importSqlData').click(function () {
+         $('body').append('<div id="importDataModal"><button class="close">close</button><textarea id="advertsCsvData">ADVERTS</textarea><textarea id="priceHistoryCsvData">PRICE HISTORY</textarea><button id="startImport">Pokreni</button></div>');
+         $('#importDataModal .close').click(function () {
+             $('#importDataModal').remove();
+         });
+
+         $('#importDataModal #startImport').click(function () {
+             dbase.deleteTables();
+             setTimeout(function () {
+                 dbase.createTables();
+             }, 1000);
+
+             setTimeout(function () {
+                 dbase.insertAdvertsBulk($('#advertsCsvData').val());
+                 //dbase.insertPricesBulk($('#priceHistoryCsvData').val());
+                 //$('#importDataModal').remove();
+             }, 3000);
+         });
+     });
+     return;
 	sessionStorage.removeItem('pauseAutoPaging');
 	if (sessionStorage.getItem("autoPaging")) {
 		actionOnDuplicate = sessionStorage.getItem('actionOnDuplicate');

@@ -239,3 +239,41 @@ a.historyBtn > span {
 #popupInfo .close:active {
 	transform: scale(0.95);
 }
+
+#importDataModal {
+    position: fixed;
+	top: 5%;
+    left: 5%;
+	right: 10px;
+	width: 90%;
+    height: 90%;
+    background-color: gray;
+    border: 1px solid black;
+    z-index: 60;
+}
+
+#importDataModal textarea {
+    width: calc(50% - 10px);
+    padding: 10px;
+    float: left;
+    margin-left: 5px;
+    margin-top: 5px;
+    height: calc(100% - 50px);
+}
+
+#importDataModal #startImport {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 40px;
+}
+
+#importDataModal .close {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    border: 1px solid black;
+    border-radius: 10px;
+    padding: 10px;
+}
