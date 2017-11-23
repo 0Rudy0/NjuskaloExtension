@@ -4,17 +4,12 @@
 	var allFinished = [];
 
 	var insertNewPrice = function (advertId, priceHRK, priceEUR, title, mainDesc, username, url, callback) {
-		//console.log(title);
-		db.transaction(function (tx) {
-			//checkIfFakeNew(tx, advertId, priceHRK, priceEUR, title, mainDesc, username, url, callback);
-			//return;
+		db.transaction(function (tx) {			
 			tx.executeSql('SELECT * FROM Advert where advertId = ?', [advertId], function (tx, results) {
-				if (results.rows.length == 0) {
+			    if (results.rows.length == 0) {
 					checkIfFakeNew(advertId, priceHRK, priceEUR, title, mainDesc, username, url, callback);
-					//insertNewAdvert(advertId, priceHRK, priceEUR, title, mainDesc, username);
-					//summary.newAds++;
 				}
-				else {
+			    else {
 					updateAdvertData(tx, advertId, title, mainDesc, username);
 					//updateTitle(tx, advertId, title);
 					//updateMainDesc(tx, advertId, mainDesc);
@@ -45,11 +40,20 @@
 	}
 
 	var checkIfFakeNew = function (advertId, priceHRK, priceEUR, title, mainDesc, username, url, callback) {
-		//callback(null, { advertId: 3 });
 
 		//ako nema dovoljno elemenata u titleu (barem 5) za identicifirati oglas, jednostavno ga spremi kao novi
-		if ((title.match(new RegExp(';', 'g')) || []).length < 5) {
-			insertNewAdvert(advertId, priceHRK, priceEUR, title, mainDesc, username);
+	    if ((title.match(new RegExp(';', 'g')) || []).length < 5) {
+	        var newAdvert = {
+	            advertId: advertId,
+	            priceHRK: priceHRK,
+	            priceEUR: priceEUR,
+	            title: title,
+	            mainDesc: mainDesc,
+	            username: username,
+	            url: url
+	        }
+	        callback(newAdvert); //send email of new advert
+			//insertNewAdvert(advertId, priceHRK, priceEUR, title, mainDesc, username);
 			return;
 		}
 
@@ -62,36 +66,58 @@
 						var adv = withSameTitle[i];
 						if (adv.username == username) {
 						    found = true;
-							//if (adv.username != username) {
-							tx.executeSql('SELECT date, priceHRK, priceEUR FROM PriceHistory where advertId = ? ORDER BY date DESC', [adv.advertId], function (tx, result) {
-								var newAdvert = {
-									advertId: advertId,
-									priceHRK: priceHRK,
-									priceEUR: priceEUR,
-									title: title,
-									mainDesc: mainDesc,
-									username: username,
-									url: url
-								}
-								var oldAdvert = {
-									advertId: adv.advertId,
-									title: adv.title,
-									priceHistory: result.rows,
-									mainDesc: adv.mainDesc,
-									username: adv.username,
-									dateLastViewed: new Date(adv.dateLastViewed),
-									dateFirstViewed: new Date(adv.dateFirstViewed)
-								}
-								callback(newAdvert, oldAdvert);
-							});
+						    //if (adv.username != username) {
+						    var adverts = {
+						        newAdvert: {
+						            advertId: advertId,
+						            priceHRK: priceHRK,
+						            priceEUR: priceEUR,
+						            title: title,
+						            mainDesc: mainDesc,
+						            username: username,
+						            url: url
+						        },
+						        oldAdvert: {
+						            advertId: adv.advertId,
+						            title: adv.title,
+						            //priceHistory: result.rows,
+						            mainDesc: adv.mainDesc,
+						            username: adv.username,
+						            dateLastViewed: new Date(adv.dateLastViewed),
+						            dateFirstViewed: new Date(adv.dateFirstViewed)
+						        },
+						        callback: callback
+						    }
+						    tx.executeSql('SELECT date, priceHRK, priceEUR FROM PriceHistory where advertId = ? ORDER BY date DESC', [adv.advertId], sendAdvertForCompare.bind(adverts));
+						    return;
 						}
 					}
 					if (!found) {
-					    insertNewAdvert(advertId, priceHRK, priceEUR, title, mainDesc, username);
+					    var newAdvert = {
+					        advertId: advertId,
+					        priceHRK: priceHRK,
+					        priceEUR: priceEUR,
+					        title: title,
+					        mainDesc: mainDesc,
+					        username: username,
+					        url: url
+					    }
+					    callback(newAdvert); //send email of new advert
+					    //insertNewAdvert(advertId, priceHRK, priceEUR, title, mainDesc, username);					   
 					}
 				}
 				else {
-					insertNewAdvert(advertId, priceHRK, priceEUR, title, mainDesc, username);
+				    var newAdvert = {
+				        advertId: advertId,
+				        priceHRK: priceHRK,
+				        priceEUR: priceEUR,
+				        title: title,
+				        mainDesc: mainDesc,
+				        username: username,
+				        url: url
+				    }
+				    callback(newAdvert); //send email of new advert
+					//insertNewAdvert(advertId, priceHRK, priceEUR, title, mainDesc, username);
 				}
 			}, function (e, a, b) {
 				console.log('greska prilikom provjere');
@@ -101,12 +127,20 @@
 					tx.executeSql('ALTER TABLE Advert ADD mainDesc VARCHAR(150)', []);
 					tx.executeSql('ALTER TABLE Advert ADD username VARCHAR(50)', []);
 				});
-				setTimeout(function () {
-					//checkIfFakeNew(advertId, priceHRK, priceEUR, title, mainDesc, username, url, callback);
-				}, 500)
+				//setTimeout(function () {
+				//	checkIfFakeNew(advertId, priceHRK, priceEUR, title, mainDesc, username, url, callback);
+				//}, 500)
 			});
 		});
 
+	}
+
+	var sendAdvertForCompare = function(tx, result) {
+	    var newAdvert = this.newAdvert;
+	    var oldAdvert = this.oldAdvert;
+	    oldAdvert.priceHistory = result.rows;
+        
+	    this.callback(newAdvert, oldAdvert);
 	}
 
 	var mergeAdverts = function (oldAdvertId, newAdvertId, priceHRK, priceEUR, title, mainDesc, username) {
@@ -175,7 +209,7 @@
 				'title VARCHAR(120),' +
 				'mainDesc VARCHAR(150),' +
 				'username VARCHAR(50))', null, function () {
-				    console.log('success creating Advert table');
+				    //console.log('success creating Advert table');
 				},
             function (err) {
                 console.log('error creating Advert table');
@@ -189,7 +223,7 @@
                     'priceEUR integer,' +
                     'date VARCHAR(15),' +
                     'FOREIGN KEY (advertId) REFERENCES Advert (advertId))', null, function () {
-                        console.log('success creating PriceHistory table');
+                        //console.log('success creating PriceHistory table');
                     },
                 function (err) {
                     console.log('error creating PriceHistory table');

@@ -277,3 +277,33 @@ a.historyBtn > span {
     border-radius: 10px;
     padding: 10px;
 }
+
+#scanningIndicator {
+    position: fixed;
+    width: 140px;
+    top: 10px;
+    left: 10px;
+    background-color: #f6f6f6;
+    font-size: 15px;
+    /*font-weight: bold;*/
+    color: black;
+    padding: 10px;
+    border: 1px solid #ff5656;
+    border-radius: 5px;
+    text-align: center;
+}
+
+#scanningIndicatorTimer {
+    position: fixed;
+    width: 140px;
+    top: 90px;
+    left: 10px;
+    background-color: #f6f6f6;
+    font-size: 15px;
+    /*font-weight: bold;*/
+    color: black;
+    padding: 10px;
+    border: 1px solid #b4b4b4;
+    border-radius: 5px;
+    text-align: center;
+}

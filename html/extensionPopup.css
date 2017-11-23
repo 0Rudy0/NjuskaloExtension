@@ -290,3 +290,15 @@ body {
   border-bottom-width: 2px;
   box-shadow: none;
 }
+
+.button.scan {
+  background: #256275;
+  box-shadow: 0 5px 0px #256275;
+  border-bottom: 2px solid #215869;
+}
+
+.button.scan:hover {
+  background: #1f5262;
+  box-shadow: 0 4px 1px #1f5262;
+  border-bottom: 2px solid #1b4856;
+}

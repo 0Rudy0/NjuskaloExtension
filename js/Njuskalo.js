@@ -21,10 +21,13 @@ var summary = {
     newAds: [],
     newPrices: []
 };
+var refreshPattern = 5; //in minutes
+var startTime = 0;
 
 chrome.runtime.onMessage.addListener(
   function (request, sender, sendResponse) {
       if (request.action == 'start') {
+          console.log('start paging');
           actionOnDuplicate = request.onDuplicate;
           //console.log(actionOnDuplicate);
           sessionStorage.setItem('actionOnDuplicate', actionOnDuplicate);
@@ -42,9 +45,30 @@ chrome.runtime.onMessage.addListener(
           }
       }
       else if (request.action == 'stop') {
+          console.log('stop paging');
           sessionStorage.setItem('pauseAutoPaging', true);
           sessionStorage.removeItem('autoPaging');
 
+      }
+      else if (request.action == 'toggleScanning') {
+          console.log('toggle scanning');
+
+          //return;
+          if (sessionStorage.getItem('scanningActive') != null) {
+              console.log('zaustavi scanning');
+
+              sessionStorage.removeItem('scanningActive');
+              $('#scanningIndicator').remove();
+              $('#scanningIndicatorTimer').remove();
+          }
+          else {
+              console.log('pokreni scanning');
+
+              sessionStorage.setItem('scanningActive', true);
+              location.reload();
+              //setTimeout(function () {
+              //}, refreshPattern * 60 * 60);
+          }
       }
   });
 
@@ -53,8 +77,32 @@ chrome.runtime.onMessage.addListener(
     //setTimeout(function () {
     //    dbase.createTables();
     //}, 1500);
+
+    if (sessionStorage.getItem('scanningActive') != null) {
+
+        setTimeout(function () {
+            location.reload();
+        }, refreshPattern * 1000 * 60);
+
+        $('body').append('<div id="scanningIndicator">Scanning every <br>' + refreshPattern + ' minutes</div>');
+        $('body').append('<div id="scanningIndicatorTimer"></div>');
+
+        startTime = (new Date()).getTime();
+        setInterval(function () {
+            var diffSeconds = ((new Date()).getTime() - startTime) / 1000;
+            var remaining = (refreshPattern * 60) - diffSeconds;
+            if (remaining < 0.1) {
+                $('#scanningIndicatorTimer').html('Refreshing...');
+            }
+            else {
+                $('#scanningIndicatorTimer').html('Next refresh in <br>' + formatFloat(remaining, 0) + ' sec');
+            }
+        }, 1000);
+
+    }
+
     dbase.createTables();
-    //return;
+
     $('.UserNav-auth .UserNav-items').append('<li class="UserNav-item"><a href="#" class="item-bit link backupSqlData">Backupiraj podatke</a></li>');
     $('.UserNav-auth .UserNav-items').append('<li class="UserNav-item"><a href="#" class="item-bit link importSqlData">Import</a></li>');
     $('..UserNav-auth .UserNav-items .backupSqlData').click(function () {
@@ -79,7 +127,7 @@ chrome.runtime.onMessage.addListener(
             }, 3000);
         });
     });
-    //return;
+
     sessionStorage.removeItem('pauseAutoPaging');
     if (sessionStorage.getItem("autoPaging")) {
         actionOnDuplicate = sessionStorage.getItem('actionOnDuplicate');
@@ -152,7 +200,11 @@ chrome.runtime.onMessage.addListener(
             }
             formatMileageList($(value));
             setTimeout(function () {
-                setAdditionalInfo($(value), isLast);
+                var temp = {
+                    el: $(value),
+                    isLast: isLast
+                }
+                setAdditionalInfo.apply(temp);
             }, index * 1);
             insertChart($(value));
         });
@@ -329,13 +381,14 @@ function getEntityElements() {
 }
 
 function setAdditionalInfo(that, isLast) {
-    var currID = JSON.parse(that[0].attributes["data-boot"].value).id;
-    var prices = getPrices(that[0]);
-    var currTitle = $(that).find('h3.entity-title a').html();
+    //var el = this;
+    var currID = JSON.parse(this.el[0].attributes["data-boot"].value).id;
+    var prices = getPrices(this.el[0]);
+    var currTitle = $(this.el).find('h3.entity-title a').html();
     //console.log(currTitle);
     //var images = getImages();
 
-    setLoadingDiv(that, currID);
+    setLoadingDiv(this.el, currID);
 
     if (usingDAL) {
         msgPort.postMessage({
@@ -349,22 +402,22 @@ function setAdditionalInfo(that, isLast) {
 
         msgPort.postMessage({
             cmd: messages.getPriceHistory,
-            data: { itemId: currID, domItem: that }
+            data: { itemId: currID, domItem: this.el }
         })
     }
 
     else {
-        that.isLast = isLast;
-        dbase.getPriceHistory(currID, that);
+        this.el.isLast = this.isLast;
+        dbase.getPriceHistory(currID, this.el);
     }
 
-    var link = that.find('h3 a')[0].href;
-    that.url = link;
+    var link = this.el.find('h3 a')[0].href;
+    this.el.url = link;
     $.ajax({
         url: link,
         async: true,
         cache: true,
-        success: getAdditionalItemInfoCallback.bind(that),
+        success: getAdditionalItemInfoCallback.bind(this.el),
         //success: function (response) {
         //	//var images = getImages(response);
         //},
@@ -375,107 +428,153 @@ function setAdditionalInfo(that, isLast) {
     });
 }
 
-function checkBeforeMerge(newAdvert, oldAdvert) {
-    //console.log('found duplicate');
-    $.get(chrome.extension.getURL('html/mergeModal.html'))
-	.done((function (data) {
-	    data = data.replace('{modalID}', 'mergeModal' + oldAdvert.advertId);
-	    var mId = '#mergeModal' + oldAdvert.advertId;
-	    $('body').append(data);
-	    $(mId).show();
-	    var title = oldAdvert.title;
-	    while (title.indexOf(';') > 0) {
-	        title = title.replace(';', '<br/>');
-	    }
-	    $(mId + ' .leftContent h3').html($(mId + ' .leftContent h3').html() + ' (ID: ' + oldAdvert.advertId + ')');
-	    $(mId + ' .leftContent .title').html(title);
-	    $(mId + ' .leftContent a.username').html(oldAdvert.username);
-	    $(mId + ' .leftContent a.username').attr('href', 'http://www.njuskalo.hr' + oldAdvert.username);
-	    $(mId + ' .leftContent p.description').html(oldAdvert.mainDesc);
-	    for (var i = 0; i < oldAdvert.priceHistory.length; i++) {
-	        var ph = oldAdvert.priceHistory[i];
-	        var priceHrk = formatFloat(ph.priceHRK, 0) + ' HRK';
-	        var priceEur = formatFloat(ph.priceEUR, 0) + ' €';
-	        $(mId + ' .leftContent ul.price-history').append('<li><b>' +
-				new Date(ph.date).toLocaleDateString('hr') + '</b> - ' + priceHrk + ' ; ' + priceEur + '</li>');
-	    }
-	    $(mId + ' .leftContent p.dateFirstViewed').html(oldAdvert.dateFirstViewed.toLocaleDateString('hr'));
-	    $(mId + ' .leftContent p.dateLastViewed').html(oldAdvert.dateLastViewed.toLocaleDateString('hr'));
+function checkBeforeMerge(newAdvert, oldAdvert, temp) {
+    if (oldAdvert == null && newAdvert == null) {
+        //console.log(temp);
+    }
+    else if (oldAdvert == null && newAdvert != null) {
+        if (sessionStorage.getItem('scanningActive') != null) {
 
-	    title = newAdvert.title;
-	    while (title.indexOf(';') > 0) {
-	        title = title.replace(';', '<br/>');
-	    }
+            newAdvert.thumbnail = $('li[data-boot="{\\"hasCompare\\":true,\\"id\\":' + newAdvert.advertId + '}"] .entity-thumbnail a>img')[0].src;
 
-	    $(mId + ' .rightContent h3').html($(mId + ' .rightContent h3').html() + ' (ID: ' + newAdvert.advertId + ')');
-	    $(mId + ' .rightContent .title').html(title);
-	    $(mId + ' .rightContent a.newAdvLink').attr('href', newAdvert.url)
-	    $(mId + ' .rightContent a.username').html(newAdvert.username);
-	    $(mId + ' .rightContent a.username').attr('href', 'http://www.njuskalo.hr' + newAdvert.username);
-	    $(mId + ' .rightContent p.description').html(newAdvert.mainDesc);
-	    var priceHrk = formatFloat(newAdvert.priceHRK, 0) + ' HRK';
-	    var priceEur = formatFloat(newAdvert.priceEUR, 0) + ' €';
-	    $(mId + ' .rightContent ul.price-history').html('<li>' + priceHrk + ' ; ' + priceEur + '</li>');
+            var subject = "Novi oglas - " + newAdvert.title.substring(0, newAdvert.title.indexOf(";"));
+            while (newAdvert.title.indexOf(";") > -1) {
+                newAdvert.title = newAdvert.title.replace(";", " - ");
+            }
 
-	    if (sessionStorage.getItem('autoPaging') == "true") {
-	        //console.log(actionOnDuplicate);
-	        switch (actionOnDuplicate) {
-	            case 'stop':
-	                sessionStorage.setItem('pauseAutoPaging', true);
-	                console.log('auto paging - pause because of the duplicate');
-	                break;
-	            case 'insertAsNew':
-	                console.log('auto paging - inserting as new');
+            //console.log(newAdvert.advertId);
+            //console.log(newAdvert.title);
+            console.log(newAdvert.thumbnail);
+            var body = "<img src=\"" + newAdvert.thumbnail + "\" alt=\"thumbnail\">";
+            body += "<br>";
+            body += "<br>";
+            body += "<a href=\"" + newAdvert.url + "\" target=\"_blank\" style=\"font-size:12pt;\">" + newAdvert.title + "</a>";
+            body += "<br>";
+            body += "<p style=\"color:black;\">" + newAdvert.mainDesc + "</p>";
+            body += "<b>";
+            body += formatFloat(newAdvert.priceHRK, 0) + " kn</b>";
+            //return;
+            $.ajax('https://api.mailgun.net/v3/sandboxeb0dfefbe39f4aa1930b96995b957258.mailgun.org/messages',
+             {
+                 type: "POST",
+                 username: 'api',
+                 password: '4db5adc931d85d17232a809646820a99',
+                 data: {
+                     "html": body,
+                     "subject": subject,
+                     "from": "Njuskalo<postmaster@sandboxeb0dfefbe39f4aa1930b96995b957258.mailgun.org>",
+                     "to": "<rudman0@gmail.com>"
+                 }, beforeSend: function (xhr) {
+                     xhr.setRequestHeader("Authorization", "Basic " + btoa("api:key-4db5adc931d85d17232a809646820a99"));
+                 },
+                 success: function (a, b, c) {
+                     console.log('mail sent: ', b);
+                 }.bind(this),
+                 error: function (xhr, status, errText) { console.log('mail sent failed: ', xhr.responseText); }
+             })
+        }
+    }
+    else if (newAdvert != null && oldAdvert != null) {
+        //console.log('found duplicate');
+        $.get(chrome.extension.getURL('html/mergeModal.html'))
+        .done((function (data) {
+            data = data.replace('{modalID}', 'mergeModal' + oldAdvert.advertId);
+            var mId = '#mergeModal' + oldAdvert.advertId;
+            $('body').append(data);
+            $(mId).show();
+            var title = oldAdvert.title;
+            while (title.indexOf(';') > 0) {
+                title = title.replace(';', '<br/>');
+            }
+            $(mId + ' .leftContent h3').html($(mId + ' .leftContent h3').html() + ' (ID: ' + oldAdvert.advertId + ')');
+            $(mId + ' .leftContent .title').html(title);
+            $(mId + ' .leftContent a.username').html(oldAdvert.username);
+            $(mId + ' .leftContent a.username').attr('href', 'http://www.njuskalo.hr' + oldAdvert.username);
+            $(mId + ' .leftContent p.description').html(oldAdvert.mainDesc);
+            for (var i = 0; i < oldAdvert.priceHistory.length; i++) {
+                var ph = oldAdvert.priceHistory[i];
+                var priceHrk = formatFloat(ph.priceHRK, 0) + ' HRK';
+                var priceEur = formatFloat(ph.priceEUR, 0) + ' €';
+                $(mId + ' .leftContent ul.price-history').append('<li><b>' +
+                    new Date(ph.date).toLocaleDateString('hr') + '</b> - ' + priceHrk + ' ; ' + priceEur + '</li>');
+            }
+            $(mId + ' .leftContent p.dateFirstViewed').html(oldAdvert.dateFirstViewed.toLocaleDateString('hr'));
+            $(mId + ' .leftContent p.dateLastViewed').html(oldAdvert.dateLastViewed.toLocaleDateString('hr'));
 
-	                dbase.insertNewAdvert(newAdvert.advertId, newAdvert.priceHRK, newAdvert.priceEUR, newAdvert.title, newAdvert.mainDesc, newAdvert.username);
-	                if (sessionStorage.getItem("autoPaging") && $('.Pagination-item.Pagination-item--next .Pagination-link').length > 0) {
-	                    setTimeout(function () {
-	                        $('.Pagination-item.Pagination-item--next .Pagination-link').click();
-	                    }, 100);
-	                }
-	                break;
-	            case 'merge':
-	                console.log('auto paging - auto merging');
+            title = newAdvert.title;
+            while (title.indexOf(';') > 0) {
+                title = title.replace(';', '<br/>');
+            }
 
-	                dbase.mergeAdverts(oldAdvert.advertId, newAdvert.advertId, newAdvert.priceHRK, newAdvert.priceEUR, newAdvert.title, newAdvert.mainDesc, newAdvert.username);
-	                setTimeout(function () {
-	                    //location.reload();
-	                }, 100);
-	                break;
-	        }
-	    }
+            $(mId + ' .rightContent h3').html($(mId + ' .rightContent h3').html() + ' (ID: ' + newAdvert.advertId + ')');
+            $(mId + ' .rightContent .title').html(title);
+            $(mId + ' .rightContent a.newAdvLink').attr('href', newAdvert.url)
+            $(mId + ' .rightContent a.username').html(newAdvert.username);
+            $(mId + ' .rightContent a.username').attr('href', 'http://www.njuskalo.hr' + newAdvert.username);
+            $(mId + ' .rightContent p.description').html(newAdvert.mainDesc);
+            var priceHrk = formatFloat(newAdvert.priceHRK, 0) + ' HRK';
+            var priceEur = formatFloat(newAdvert.priceEUR, 0) + ' €';
+            $(mId + ' .rightContent ul.price-history').html('<li>' + priceHrk + ' ; ' + priceEur + '</li>');
 
-	    $(mId + ' .acceptMerge').click(function () {
-	        $(mId).hide();
-	        dbase.mergeAdverts(oldAdvert.advertId, newAdvert.advertId, newAdvert.priceHRK, newAdvert.priceEUR, newAdvert.title, newAdvert.mainDesc, newAdvert.username);
-	        setTimeout(function () {
-	            sessionStorage.removeItem('pauseAutoPaging');
-	            location.reload();
-	        }, 100);
-	    });
-	    $(mId + ' .cancelMerge').click(function () {
-	        $(mId).hide();
-	        sessionStorage.removeItem('pauseAutoPaging');
-	        dbase.insertNewAdvert(newAdvert.advertId, newAdvert.priceHRK, newAdvert.priceEUR, newAdvert.title, newAdvert.mainDesc, newAdvert.username);
+            if (sessionStorage.getItem('autoPaging') == "true") {
+                //console.log(actionOnDuplicate);
+                switch (actionOnDuplicate) {
+                    case 'stop':
+                        sessionStorage.setItem('pauseAutoPaging', true);
+                        console.log('auto paging - pause because of the duplicate');
+                        break;
+                    case 'insertAsNew':
+                        console.log('auto paging - inserting as new');
 
-	        if (sessionStorage.getItem("autoPaging") && $('.Pagination-item.Pagination-item--next .Pagination-link').length > 0) {
-	            setTimeout(function () {
-	                $('.Pagination-item.Pagination-item--next .Pagination-link').click();
-	            }, 100);
-	        }
-	    });
-	    $(mId + ' .closeBtn').click(function () {
-	        $(mId).hide();
-	        sessionStorage.removeItem('pauseAutoPaging');
+                        dbase.insertNewAdvert(newAdvert.advertId, newAdvert.priceHRK, newAdvert.priceEUR, newAdvert.title, newAdvert.mainDesc, newAdvert.username);
+                        if (sessionStorage.getItem("autoPaging") && $('.Pagination-item.Pagination-item--next .Pagination-link').length > 0) {
+                            setTimeout(function () {
+                                $('.Pagination-item.Pagination-item--next .Pagination-link').click();
+                            }, 100);
+                        }
+                        break;
+                    case 'merge':
+                        console.log('auto paging - auto merging');
 
-	        if (sessionStorage.getItem("autoPaging") && $('.Pagination-item.Pagination-item--next .Pagination-link').length > 0) {
-	            setTimeout(function () {
-	                $('.Pagination-item.Pagination-item--next .Pagination-link').click();
-	            }, 100);
-	        }
-	    });
-	}));
+                        dbase.mergeAdverts(oldAdvert.advertId, newAdvert.advertId, newAdvert.priceHRK, newAdvert.priceEUR, newAdvert.title, newAdvert.mainDesc, newAdvert.username);
+                        setTimeout(function () {
+                            //location.reload();
+                        }, 100);
+                        break;
+                }
+            }
 
+            $(mId + ' .acceptMerge').click(function () {
+                $(mId).hide();
+                dbase.mergeAdverts(oldAdvert.advertId, newAdvert.advertId, newAdvert.priceHRK, newAdvert.priceEUR, newAdvert.title, newAdvert.mainDesc, newAdvert.username);
+                setTimeout(function () {
+                    sessionStorage.removeItem('pauseAutoPaging');
+                    location.reload();
+                }, 100);
+            });
+            $(mId + ' .cancelMerge').click(function () {
+                $(mId).hide();
+                sessionStorage.removeItem('pauseAutoPaging');
+                dbase.insertNewAdvert(newAdvert.advertId, newAdvert.priceHRK, newAdvert.priceEUR, newAdvert.title, newAdvert.mainDesc, newAdvert.username);
+
+                if (sessionStorage.getItem("autoPaging") && $('.Pagination-item.Pagination-item--next .Pagination-link').length > 0) {
+                    setTimeout(function () {
+                        $('.Pagination-item.Pagination-item--next .Pagination-link').click();
+                    }, 100);
+                }
+            });
+            $(mId + ' .closeBtn').click(function () {
+                $(mId).hide();
+                sessionStorage.removeItem('pauseAutoPaging');
+
+                if (sessionStorage.getItem("autoPaging") && $('.Pagination-item.Pagination-item--next .Pagination-link').length > 0) {
+                    setTimeout(function () {
+                        $('.Pagination-item.Pagination-item--next .Pagination-link').click();
+                    }, 100);
+                }
+            });
+        }));
+    }
 }
 
 function setLoadingDiv(element, itemId) {
@@ -995,7 +1094,15 @@ function getPrices(element) {
 }
 
 function onGetHistory(tx, results) {
+    $('#popupInfo #newAds').html('');
+    $('#popupInfo #newAdsList').html('');
     if (!this.details) {
+        var priceHistory = results.rows;
+        if (results.length > 1) {
+            embedPriceHistory(this, priceHistory, this.currID);
+        }
+        embedDateFirstViewed(this, priceHistory);
+
         //list
         if (this.isLast && (summary.newAds.length > 0 || summary.newPrices.length > 0)) {
             if (summary.newAds.length > 0) {
@@ -1060,11 +1167,6 @@ function onGetHistory(tx, results) {
         }
 
         //gfs
-        var priceHistory = results.rows;
-        if (results.length > 1) {
-            embedPriceHistory(this, priceHistory, this.currID);
-        }
-        embedDateFirstViewed(this, priceHistory);
     }
     else {
         //details
