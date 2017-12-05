@@ -53,7 +53,7 @@
 	            url: url
 	        }
 	        callback(newAdvert); //send email of new advert
-			//insertNewAdvert(advertId, priceHRK, priceEUR, title, mainDesc, username);
+			insertNewAdvert(advertId, priceHRK, priceEUR, title, mainDesc, username);
 			return;
 		}
 
@@ -103,7 +103,7 @@
 					        url: url
 					    }
 					    callback(newAdvert); //send email of new advert
-					    //insertNewAdvert(advertId, priceHRK, priceEUR, title, mainDesc, username);					   
+					    insertNewAdvert(advertId, priceHRK, priceEUR, title, mainDesc, username);					   
 					}
 				}
 				else {
@@ -117,7 +117,7 @@
 				        url: url
 				    }
 				    callback(newAdvert); //send email of new advert
-					//insertNewAdvert(advertId, priceHRK, priceEUR, title, mainDesc, username);
+					insertNewAdvert(advertId, priceHRK, priceEUR, title, mainDesc, username);
 				}
 			}, function (e, a, b) {
 				console.log('greska prilikom provjere');
