@@ -1060,13 +1060,18 @@ function addRemoveButtons() {
 }
 
 function getImages(response) {
-    var items = $($(response).find('.base-entity-thumbnails--multimedia')[0]).find('li.thumbnail-item a.js-galleryThumbnailLink');
+    var items = $($(response).find('.BaseEntityThumbnails--multimedia.Gallery-thumbnails')[0]).find('li.BaseEntityThumbnails-item a.BaseEntityThumbnails-link');
     var largeImages = [];
     var thumbs = [];
 
     for (var i = 0; i < items.length; i++) {
         largeImages.push($(items[i])[0].href);
-        thumbs.push($($(items[i])).find('img')[0].src);
+        if ($($(items[i])).find('img')[0]) {
+            thumbs.push($($(items[i])).find('img')[0].src);
+        }
+        else {
+            thumbs.push($(items[i])[0].href);
+        }
     }
     return {
         imgs: largeImages,

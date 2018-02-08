@@ -138,24 +138,33 @@
 	width: 40px;
 	height: 40px;
 	cursor: pointer;
-	background: url('http://www.jssor.com/img/a17.png') no-repeat;
 	overflow: hidden;
-}
-
-.jssora05l {
-	background-position: -10px -40px;
+    background-size: 40px !important;
+    background-position: center !important;
 }
 
 .jssora05r {
-	background-position: -70px -40px;
+	background: url('https://cdn3.iconfinder.com/data/icons/2experts-30-icons-set/Arrow-Right.png') no-repeat;
+}
+
+.jssora05l {
+	background: url('https://cdn3.iconfinder.com/data/icons/2experts-30-icons-set/Arrow-Left.png') no-repeat;
 }
 
 .jssora05l:hover {
-	background-position: -130px -40px;
+    background-size: 43px !important;
 }
 
 .jssora05r:hover {
-	background-position: -190px -40px;
+    background-size: 43px !important;
+}
+
+.jssora05l:active {
+    background-size: 37px !important;
+}
+
+.jssora05r:active {
+    background-size: 37px !important;
 }
 
 .jssora05l.jssora05ldn {
