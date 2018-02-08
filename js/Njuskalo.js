@@ -353,9 +353,9 @@ function getEntityElements() {
     for (var i = 0; i < vauItemsDuplicate.length; i++) {
         var found = false;
         for (var j = 0; j < vauItems.length; j++) {
-            //console.log(JSON.parse($(vauItemsDuplicate[i])[0].attributes["data-boot"].value).id);
-            if (JSON.parse($(vauItemsDuplicate[i])[0].attributes["data-boot"].value).id ==
-				JSON.parse($(vauItems[j])[0].attributes["data-boot"].value).id) {
+            //console.log(JSON.parse($(vauItemsDuplicate[i])[0].attributes["data-options"].value).id);
+            if (JSON.parse($(vauItemsDuplicate[i])[0].attributes["data-options"].value).id ==
+				JSON.parse($(vauItems[j])[0].attributes["data-options"].value).id) {
                 $(vauItemsDuplicate[i]).hide();
                 found = true;
                 break;
@@ -382,7 +382,7 @@ function getEntityElements() {
 
 function setAdditionalInfo(that, isLast) {
     //var el = this;
-    var currID = JSON.parse(this.el[0].attributes["data-boot"].value).id;
+    var currID = JSON.parse(this.el[0].attributes["data-options"].value).id;
     var prices = getPrices(this.el[0]);
     var currTitle = $(this.el).find('h3.entity-title a').html();
     //console.log(currTitle);
@@ -435,7 +435,7 @@ function checkBeforeMerge(newAdvert, oldAdvert, temp) {
     else if (oldAdvert == null && newAdvert != null) {
         if (sessionStorage.getItem('scanningActive') != null) {
 
-            newAdvert.thumbnail = $('li[data-boot="{\\"hasCompare\\":true,\\"id\\":' + newAdvert.advertId + '}"] .entity-thumbnail a>img')[0].src;
+            newAdvert.thumbnail = $('li[data-options="{\\"hasCompare\\":true,\\"id\\":' + newAdvert.advertId + '}"] .entity-thumbnail a>img')[0].src;
 
             var subject = "Novi oglas - " + newAdvert.title.substring(0, newAdvert.title.indexOf(";"));
             while (newAdvert.title.indexOf(";") > -1) {
@@ -627,7 +627,7 @@ function getAdditionalItemInfoCallback(response) {
     this.find('.loadingDiv').hide();
     var images = getImages(response);
 
-    allImages[JSON.parse(this[0].attributes["data-boot"].value).id] = images;
+    allImages[JSON.parse(this[0].attributes["data-options"].value).id] = images;
 
     var username = $(response).find('.Profile-wrapUsername a').attr('href');
     //return;
@@ -771,7 +771,7 @@ function getAdditionalItemInfoCallback(response) {
     $(this.find('#entity-description-rest')[0]).css('padding-right', '50px');
 
     //insert new price
-    var currID = JSON.parse(this[0].attributes["data-boot"].value).id;
+    var currID = JSON.parse(this[0].attributes["data-options"].value).id;
     var prices = getPrices(this);
     var mainDesc = $(this).find('.entity-description-main').html().trim();
 
@@ -871,7 +871,7 @@ function embedPriceHistory(jQueryElement, priceHistory, itemId) {
         if ((new Date(priceHistory[i].date)).toLocaleDateString('hr') == (new Date().toLocaleDateString('hr'))) {
             $('#historyBtnList' + itemId).css('background-color', '#cc002c');
             $('#historyBtnList' + itemId).addClass('newPrice');
-            summary.newPrices.push(JSON.parse(jQueryElement.attr('data-boot')).id);
+            summary.newPrices.push(JSON.parse(jQueryElement.attr('data-options')).id);
         }
 
         if (i == priceHistory.length - 1) {
@@ -904,7 +904,7 @@ function embedDateFirstViewed(jQueryElement, priceHistory) {
     }
     var elapsedDaysString = '(prije ' + elapsedDays + ' dana)';
     if (elapsedDays == 0) {
-        summary.newAds.push(JSON.parse(jQueryElement.attr('data-boot')).id);
+        summary.newAds.push(JSON.parse(jQueryElement.attr('data-options')).id);
         //jQueryElement.removeClass('EntityList-item--Regular');
         //jQueryElement.removeClass('js-EntityList-item--Regular');
         jQueryElement.addClass('EntityList-item--New');
@@ -924,7 +924,7 @@ function embedDateFirstViewed(jQueryElement, priceHistory) {
 }
 
 function insertChart(that) {
-    var itemId = JSON.parse(that[0].attributes["data-boot"].value).id;
+    var itemId = JSON.parse(that[0].attributes["data-options"].value).id;
     jQuery('<div/>', {
         id: 'chart_div' + itemId,
         text: ''
@@ -1193,7 +1193,7 @@ function onGetHistory(tx, results) {
 
 function onAddItemClick() {
     $('html, body').animate({
-        scrollTop: $('li[data-boot="{\"hasCompare\":true,\"id\":' + this + '}"]').offset().top
+        scrollTop: $('li[data-options="{\"hasCompare\":true,\"id\":' + this + '}"]').offset().top
     }, 50);
 }
 
