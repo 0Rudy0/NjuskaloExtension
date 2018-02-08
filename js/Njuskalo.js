@@ -263,10 +263,22 @@ chrome.runtime.onMessage.addListener(
 //#region only details
 
 function scrollonImageClick() {
-    $($('.gallery-action--zoom.js-galleryActionZoom')[0]).click(function () {
+    $($('.Gallery-action.Gallery-action--zoom.Gallery-genericZoomAction')[0]).click(function () {
         setTimeout(function () {
-            $('body').scrollTop($('.base-entity-tab--gallery').offset().top);
-        }, 400);
+            window.scrollTo(0, $('#base-entity-gallery-tab').offset().top);
+            setTimeout(function () {
+                window.scrollTo(0, $('#base-entity-gallery-tab').offset().top);
+                setTimeout(function () {
+                    window.scrollTo(0, $('#base-entity-gallery-tab').offset().top);
+                    setTimeout(function () {
+                        window.scrollTo(0, $('#base-entity-gallery-tab').offset().top);
+                        setTimeout(function () {
+                            window.scrollTo(0, $('#base-entity-gallery-tab').offset().top);
+                        }, 100);
+                    }, 100);
+                }, 100);
+            }, 100);
+        }, 100);
     });
 }
 
