@@ -307,3 +307,8 @@ a.historyBtn > span {
     border-radius: 5px;
     text-align: center;
 }
+
+#comm100-button-1554, 
+iframe {
+    display: none;
+}

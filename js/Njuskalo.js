@@ -258,6 +258,10 @@ chrome.runtime.onMessage.addListener(
 
 				});
     }
+
+    setTimeout(function () {
+        $('iframe').remove();
+    }, 6000);
 })();
 
 //#region only details
