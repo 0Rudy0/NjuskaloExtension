@@ -1213,9 +1213,16 @@ function onGetHistory(tx, results) {
 }
 
 function onAddItemClick() {
-    $('html, body').animate({
-        scrollTop: $('li[data-options="{\"hasCompare\":true,\"id\":' + this + '}"]').offset().top
-    }, 50);
+    if ($('li[data-options="{\"hasCompare\":true,\"id\":' + this + '}"]').length == 0) {
+        $('html, body').animate({
+            scrollTop: $('li[data-options="{\"hasCompare\":false,\"id\":' + this + '}"]').offset().top
+        }, 50);
+    }
+    else {
+        $('html, body').animate({
+            scrollTop: $('li[data-options="{\"hasCompare\":true,\"id\":' + this + '}"]').offset().top
+        }, 50);
+    }
 }
 
 function formatFloat(num, casasDec, suffix) {
