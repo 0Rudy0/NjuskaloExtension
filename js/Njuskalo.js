@@ -1064,7 +1064,7 @@ function addRemoveButtons() {
 }
 
 function getImages(response) {
-    var items = $($(response).find('.BaseEntityThumbnails--multimedia.Gallery-thumbnails')[0]).find('li.BaseEntityThumbnails-item a.BaseEntityThumbnails-link');
+    var items = $($(response).find('.BaseEntityThumbnails--multimedia.Gallery-thumbnails')[1]).find('li.BaseEntityThumbnails-item a.BaseEntityThumbnails-link');
     var largeImages = [];
     var thumbs = [];
 

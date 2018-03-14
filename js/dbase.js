@@ -145,8 +145,8 @@
 
 	var mergeAdverts = function (oldAdvertId, newAdvertId, priceHRK, priceEUR, title, mainDesc, username) {
 		db.transaction(function (tx) {
-		    tx.executeSql('UPDATE Advert set advertId = ? where advertId = ?', [newAdvertId, oldAdvertId], function (tx) { console.log('error updating'); });
-		    tx.executeSql('UPDATE PriceHistory set advertId = ? where advertId = ?', [newAdvertId, oldAdvertId], function (tx) { console.log('error updating'); });
+		    tx.executeSql('UPDATE Advert set advertId = ? where advertId = ?', [newAdvertId, oldAdvertId], function (tx) { console.log('error updating advert'); });
+		    tx.executeSql('UPDATE PriceHistory set advertId = ? where advertId = ?', [newAdvertId, oldAdvertId], function (tx) { console.log('error updating price history'); });
 			setTimeout(function () {
 				insertNewPrice(newAdvertId, priceHRK, priceEUR, title, mainDesc, username, null, null);
 			}, 500);
