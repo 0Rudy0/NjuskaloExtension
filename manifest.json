@@ -3,7 +3,7 @@
 
     "name": "Njuskalo enhancer",
     "description": "Enhancing Njuskalo experience, price tracking.",
-    "version": "1.3.3",
+    "version": "1.3.6",
     "icons": {
         "16": "icons/njuskalo_16.png",
         "48": "icons/njuskalo_48.png",

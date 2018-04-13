@@ -19,7 +19,9 @@ var usingDAL = false;
 var actionOnDuplicate = '';
 var summary = {
     newAds: [],
-    newPrices: []
+    newAds2: {},
+    newPrices: [],
+    newPrices2: {}
 };
 var refreshPattern = 5; //in minutes
 var startTime = 0;
@@ -166,6 +168,7 @@ chrome.runtime.onMessage.addListener(
         }
     }
     if ($('.EntityListFilter.block-standard').length == 0) {
+        //gleda se jedan oglas
         formatMileageAddHP();
         var itemId = window.location.href.substring(window.location.href.lastIndexOf('-') + 1);
 
@@ -192,6 +195,7 @@ chrome.runtime.onMessage.addListener(
         scrollonImageClick();
     }
     else {
+        //gleda se lista oglasa
         var items = getEntityElements();
         $.each(items, function (index, value) {
             var isLast = false;
@@ -424,7 +428,7 @@ function setAdditionalInfo(that, isLast) {
 
     else {
         this.el.isLast = this.isLast;
-        dbase.getPriceHistory(currID, this.el);
+        //dbase.getPriceHistory(currID, this.el);
     }
 
     var link = this.el.find('h3 a')[0].href;
@@ -511,8 +515,9 @@ function checkBeforeMerge(newAdvert, oldAdvert, temp) {
                 var ph = oldAdvert.priceHistory[i];
                 var priceHrk = formatFloat(ph.priceHRK, 0) + ' HRK';
                 var priceEur = formatFloat(ph.priceEUR, 0) + ' €';
-                $(mId + ' .leftContent ul.price-history').append('<li><b>' +
+                $(mId + ' .leftContent ul.price-history-merge').append('<li><b>' +
                     new Date(ph.date).toLocaleDateString('hr') + '</b> - ' + priceHrk + ' ; ' + priceEur + '</li>');
+                console.log(priceHrk);
             }
             $(mId + ' .leftContent p.dateFirstViewed').html(oldAdvert.dateFirstViewed.toLocaleDateString('hr'));
             $(mId + ' .leftContent p.dateLastViewed').html(oldAdvert.dateLastViewed.toLocaleDateString('hr'));
@@ -530,7 +535,7 @@ function checkBeforeMerge(newAdvert, oldAdvert, temp) {
             $(mId + ' .rightContent p.description').html(newAdvert.mainDesc);
             var priceHrk = formatFloat(newAdvert.priceHRK, 0) + ' HRK';
             var priceEur = formatFloat(newAdvert.priceEUR, 0) + ' €';
-            $(mId + ' .rightContent ul.price-history').html('<li>' + priceHrk + ' ; ' + priceEur + '</li>');
+            $(mId + ' .rightContent ul.price-history-merge').html('<li>' + priceHrk + ' ; ' + priceEur + '</li>');
 
             if (sessionStorage.getItem('autoPaging') == "true") {
                 //console.log(actionOnDuplicate);
@@ -813,7 +818,17 @@ function getAdditionalItemInfoCallback(response) {
     }
 
     dbase.insertNewPrice(currID, prices.priceHRK, prices.priceEUR, concatTitle, mainDesc, username, this.url, checkBeforeMerge);
+    setTimeout(getPrHistory.bind({
+        currID: currID,
+        el: this
+    }), 100);
+    //dbase.getPriceHistory(currID, this.el);
 }
+
+function getPrHistory() {
+    dbase.getPriceHistory(this.currID, this.el);
+}
+
 
 function embedPriceHistory(jQueryElement, priceHistory, itemId) {
     jQuery('<li/>', {
@@ -884,10 +899,11 @@ function embedPriceHistory(jQueryElement, priceHistory, itemId) {
             text: (new Date(priceHistory[i].date)).toLocaleDateString('hr')
         }).appendTo(jQueryElement.find('#priceList' + i)[0]);
 
-        if ((new Date(priceHistory[i].date)).toLocaleDateString('hr') == (new Date().toLocaleDateString('hr'))) {
+        if ((new Date(priceHistory[i].date)).toLocaleDateString('hr') == (new Date()).toLocaleDateString('hr')) {
             $('#historyBtnList' + itemId).css('background-color', '#cc002c');
             $('#historyBtnList' + itemId).addClass('newPrice');
             summary.newPrices.push(JSON.parse(jQueryElement.attr('data-options')).id);
+            summary.newPrices2[JSON.parse(jQueryElement.attr('data-options')).id] = true;
         }
 
         if (i == priceHistory.length - 1) {
@@ -921,6 +937,7 @@ function embedDateFirstViewed(jQueryElement, priceHistory) {
     var elapsedDaysString = '(prije ' + elapsedDays + ' dana)';
     if (elapsedDays == 0) {
         summary.newAds.push(JSON.parse(jQueryElement.attr('data-options')).id);
+        summary.newAds2[JSON.parse(jQueryElement.attr('data-options')).id] = true;
         //jQueryElement.removeClass('EntityList-item--Regular');
         //jQueryElement.removeClass('js-EntityList-item--Regular');
         jQueryElement.addClass('EntityList-item--New');
@@ -1115,8 +1132,8 @@ function getPrices(element) {
 }
 
 function onGetHistory(tx, results) {
-    $('#popupInfo #newAds').html('');
-    $('#popupInfo #newAdsList').html('');
+    //$('#popupInfo #newAds').html('');
+    //$('#popupInfo #newAdsList').html('');
     if (!this.details) {
         var priceHistory = results.rows;
         if (results.length > 1) {
@@ -1125,49 +1142,55 @@ function onGetHistory(tx, results) {
         embedDateFirstViewed(this, priceHistory);
 
         //list
-        if (this.isLast && (summary.newAds.length > 0 || summary.newPrices.length > 0)) {
-            if (summary.newAds.length > 0) {
+        if (this.isLast && (Object.getOwnPropertyNames(summary.newAds2).length > 0 || Object.getOwnPropertyNames(summary.newPrices2).length > 0)) {
+            //console.log('last');
+            //console.log(Object.getOwnPropertyNames(summary.newAds2));
+            //console.log(Object.getOwnPropertyNames(summary.newPrices2));
+            if (Object.getOwnPropertyNames(summary.newAds2).length > 0) {
                 $('#newAdsP').show();
-                $('#popupInfo #newAds').html(summary.newAds.length);
+                $('#popupInfo #newAds').html(Object.getOwnPropertyNames(summary.newAds2).length);
                 //var html = '';
                 for (var i = 0; i < summary.newAds.length; i++) {
+                    var ad = Object.getOwnPropertyNames(summary.newAds2)[i];
                     jQuery('<li/>', {
-                        id: 'newAd' + summary.newAds[i],
+                        id: 'newAd' + ad,
                         text: ''
                     }).appendTo($('#newAdsList'));
                     jQuery('<a/>', {
-                        id: 'newAdAnchor' + summary.newAds[i],
+                        id: 'newAdAnchor' + ad,
                         href: '#',
-                        text: summary.newAds[i]
-                    }).appendTo($('#newAd' + summary.newAds[i]));
+                        text: ad
+                    }).appendTo($('#newAd' + ad));
 
-                    $('#newAdAnchor' + summary.newAds[i]).click(onAddItemClick.bind(summary.newAds[i]));
+                    $('#newAdAnchor' + ad).click(onAddItemClick.bind(ad));
                 }
             }
             else {
                 $('#newAdsP').hide();
             }
 
-            if (summary.newPrices.length > 0) {
+            if (Object.getOwnPropertyNames(summary.newPrices2).length > 0) {
                 $('#changedPricesP').show();
-                $('#popupInfo #changedPriceAds').html(summary.newPrices.length);
+                $('#popupInfo #changedPriceAds').html(Object.getOwnPropertyNames(summary.newPrices2).length);
 
-                for (var i = 0; i < summary.newPrices.length; i++) {
+                for (var i = 0; i < Object.getOwnPropertyNames(summary.newPrices2).length; i++) {
+                    var pr = Object.getOwnPropertyNames(summary.newPrices2)[i];
                     jQuery('<li/>', {
-                        id: 'newPrice' + summary.newPrices[i],
+                        id: 'newPrice' + pr,
                         text: ''
                     }).appendTo($('#changedPricesList'));
                     jQuery('<a/>', {
-                        id: 'newPriceAnchor' + summary.newPrices[i],
+                        id: 'newPriceAnchor' + pr,
                         href: '#',
-                        text: summary.newPrices[i]
-                    }).appendTo($('#newPrice' + summary.newPrices[i]));
+                        text: pr
+                    }).appendTo($('#newPrice' + pr));
 
-                    $('#newPriceAnchor' + summary.newPrices[i]).click(onAddItemClick.bind(summary.newPrices[i]));
+                    $('#newPriceAnchor' + pr).click(onAddItemClick.bind(pr));
                 }
             }
             else {
                 $('#changedPricesP').hide();
+                $('#popupInfo #changedPriceAds').html(0);
             }
 
             $('#popupInfo').animate({ opacity: 1 }, 500);
