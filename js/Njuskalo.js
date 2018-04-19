@@ -17,6 +17,7 @@ var transferDataToBckgScript = false;
 var recreateTables = true;
 var usingDAL = false;
 var actionOnDuplicate = '';
+var stack = [];
 var summary = {
     newAds: [],
     newAds2: {},
@@ -198,9 +199,11 @@ chrome.runtime.onMessage.addListener(
         //gleda se lista oglasa
         var items = getEntityElements();
         $.each(items, function (index, value) {
+            stack.push(1);
             var isLast = false;
             if (index == items.length - 1) {
                 isLast = true;
+                console.log('stack: ' + stack.length);
             }
             formatMileageList($(value));
             setTimeout(function () {
@@ -904,6 +907,7 @@ function embedPriceHistory(jQueryElement, priceHistory, itemId) {
             $('#historyBtnList' + itemId).addClass('newPrice');
             summary.newPrices.push(JSON.parse(jQueryElement.attr('data-options')).id);
             summary.newPrices2[JSON.parse(jQueryElement.attr('data-options')).id] = true;
+            console.log("new price: " + JSON.parse(jQueryElement.attr('data-options')).id);
         }
 
         if (i == priceHistory.length - 1) {
@@ -938,6 +942,7 @@ function embedDateFirstViewed(jQueryElement, priceHistory) {
     if (elapsedDays == 0) {
         summary.newAds.push(JSON.parse(jQueryElement.attr('data-options')).id);
         summary.newAds2[JSON.parse(jQueryElement.attr('data-options')).id] = true;
+        console.log("new ad: " + JSON.parse(jQueryElement.attr('data-options')).id);
         //jQueryElement.removeClass('EntityList-item--Regular');
         //jQueryElement.removeClass('js-EntityList-item--Regular');
         jQueryElement.addClass('EntityList-item--New');
@@ -1134,6 +1139,9 @@ function getPrices(element) {
 function onGetHistory(tx, results) {
     //$('#popupInfo #newAds').html('');
     //$('#popupInfo #newAdsList').html('');
+    stack.pop();
+    this.isLast = stack.length == 0;
+
     if (!this.details) {
         var priceHistory = results.rows;
         if (results.length > 1) {
@@ -1142,7 +1150,11 @@ function onGetHistory(tx, results) {
         embedDateFirstViewed(this, priceHistory);
 
         //list
+        if (this.isLast) {
+            console.log(summary);
+        }
         if (this.isLast && (Object.getOwnPropertyNames(summary.newAds2).length > 0 || Object.getOwnPropertyNames(summary.newPrices2).length > 0)) {
+            
             //console.log('last');
             //console.log(Object.getOwnPropertyNames(summary.newAds2));
             //console.log(Object.getOwnPropertyNames(summary.newPrices2));
