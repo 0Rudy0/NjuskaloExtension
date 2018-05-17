@@ -203,7 +203,7 @@ chrome.runtime.onMessage.addListener(
             var isLast = false;
             if (index == items.length - 1) {
                 isLast = true;
-                console.log('stack: ' + stack.length);
+                //console.log('stack: ' + stack.length);
             }
             formatMileageList($(value));
             setTimeout(function () {
@@ -467,7 +467,7 @@ function checkBeforeMerge(newAdvert, oldAdvert, temp) {
 
             //console.log(newAdvert.advertId);
             //console.log(newAdvert.title);
-            console.log(newAdvert.thumbnail);
+            //console.log(newAdvert.thumbnail);
             var body = "<img src=\"" + newAdvert.thumbnail + "\" alt=\"thumbnail\">";
             body += "<br>";
             body += "<br>";
@@ -520,7 +520,7 @@ function checkBeforeMerge(newAdvert, oldAdvert, temp) {
                 var priceEur = formatFloat(ph.priceEUR, 0) + ' €';
                 $(mId + ' .leftContent ul.price-history-merge').append('<li><b>' +
                     new Date(ph.date).toLocaleDateString('hr') + '</b> - ' + priceHrk + ' ; ' + priceEur + '</li>');
-                console.log(priceHrk);
+                //console.log(priceHrk);
             }
             $(mId + ' .leftContent p.dateFirstViewed').html(oldAdvert.dateFirstViewed.toLocaleDateString('hr'));
             $(mId + ' .leftContent p.dateLastViewed').html(oldAdvert.dateLastViewed.toLocaleDateString('hr'));
@@ -906,8 +906,9 @@ function embedPriceHistory(jQueryElement, priceHistory, itemId) {
             $('#historyBtnList' + itemId).css('background-color', '#cc002c');
             $('#historyBtnList' + itemId).addClass('newPrice');
             summary.newPrices.push(JSON.parse(jQueryElement.attr('data-options')).id);
-            summary.newPrices2[JSON.parse(jQueryElement.attr('data-options')).id] = true;
-            console.log("new price: " + JSON.parse(jQueryElement.attr('data-options')).id);
+            //summary.newPrices2[JSON.parse(jQueryElement.attr('data-options')).id] = true;
+            summary.newPrices2[JSON.parse(jQueryElement.attr('data-options')).id] = jQueryElement[0].innerText;
+            //console.log("new price: " + JSON.parse(jQueryElement.attr('data-options')).id);
         }
 
         if (i == priceHistory.length - 1) {
@@ -941,8 +942,9 @@ function embedDateFirstViewed(jQueryElement, priceHistory) {
     var elapsedDaysString = '(prije ' + elapsedDays + ' dana)';
     if (elapsedDays == 0) {
         summary.newAds.push(JSON.parse(jQueryElement.attr('data-options')).id);
-        summary.newAds2[JSON.parse(jQueryElement.attr('data-options')).id] = true;
-        console.log("new ad: " + JSON.parse(jQueryElement.attr('data-options')).id);
+        //summary.newAds2[JSON.parse(jQueryElement.attr('data-options')).id] = true;
+        summary.newAds2[JSON.parse(jQueryElement.attr('data-options')).id] = jQueryElement[0].innerText;
+        //console.log("new ad: " + JSON.parse(jQueryElement.attr('data-options')).id);
         //jQueryElement.removeClass('EntityList-item--Regular');
         //jQueryElement.removeClass('js-EntityList-item--Regular');
         jQueryElement.addClass('EntityList-item--New');
@@ -1086,7 +1088,8 @@ function addRemoveButtons() {
 }
 
 function getImages(response) {
-    var items = $($(response).find('.BaseEntityThumbnails--multimedia.Gallery-thumbnails')[1]).find('li.BaseEntityThumbnails-item a.BaseEntityThumbnails-link');
+    var index = $($(response).find('.BaseEntityThumbnails--multimedia.Gallery-thumbnails')).length - 1;
+    var items = $($(response).find('.BaseEntityThumbnails--multimedia.Gallery-thumbnails')[index]).find('li.BaseEntityThumbnails-item a.BaseEntityThumbnails-link');
     var largeImages = [];
     var thumbs = [];
 
@@ -1104,6 +1107,72 @@ function getImages(response) {
         thumbs: thumbs
     }
     //console.log(items);
+}
+
+function orderSummary() {
+    //return;
+    var orderResult = order(summary.newAds, summary.newAds2);
+
+    summary.newAds = orderResult.array;
+    summary.newAds2 = orderResult.object;
+
+    //console.log('----------------');
+    //console.log('new prices!');
+    //console.log('----------------');
+    var orderResult = order(summary.newPrices, summary.newPrices2);
+
+    summary.newPrices = orderResult.array;
+    summary.newPrices2 = orderResult.object;
+   
+}
+
+function order(array, object) {
+    var listToOrder = []
+    for (var i = 0; i < array.length; i++) {
+        var position = $('li[data-options="{\"hasCompare\":true,\"id\":' + array[i] + '}"]').length == 0 ?
+            $('li[data-options="{\"hasCompare\":false,\"id\":' + array[i] + '}"]').offset().top :
+            $('li[data-options="{\"hasCompare\":true,\"id\":' + array[i] + '}"]').offset().top;
+
+        listToOrder.push({
+            object: object[array[i]],
+            id: array[i],
+            position: position
+        })
+    }
+    //console.table(listToOrder);
+
+    var swapped = true;
+    while (swapped) {
+        swapped = false;
+        for (var i = 0; i < listToOrder.length - 1; i++) {
+            if (listToOrder[i].position > listToOrder[i + 1].position) {
+                var temp = listToOrder[i];
+                listToOrder[i] = listToOrder[i + 1];
+                listToOrder[i + 1] = temp;
+                swapped = true;
+            }
+        }
+    }
+
+    //console.table(listToOrder);
+
+    var newAds2 = {};
+    var newAds = [];
+
+    for (var i = 0; i < listToOrder.length; i++) {
+        for (var j = 0; j < array.length; j++) {
+            if (listToOrder[i].id == array[j]) {
+                newAds.push(array[j]);
+                newAds2[array[j]] = listToOrder[i].object;
+                break;
+            }
+        }
+    }
+
+    return {
+        array: newAds,
+        object: newAds2
+    }
 }
 
 //#endregion
@@ -1150,11 +1219,11 @@ function onGetHistory(tx, results) {
         embedDateFirstViewed(this, priceHistory);
 
         //list
-        if (this.isLast) {
-            console.log(summary);
-        }
+        //if (this.isLast) {
+        //    console.log(summary);
+        //}
         if (this.isLast && (Object.getOwnPropertyNames(summary.newAds2).length > 0 || Object.getOwnPropertyNames(summary.newPrices2).length > 0)) {
-            
+            orderSummary();
             //console.log('last');
             //console.log(Object.getOwnPropertyNames(summary.newAds2));
             //console.log(Object.getOwnPropertyNames(summary.newPrices2));
@@ -1163,7 +1232,8 @@ function onGetHistory(tx, results) {
                 $('#popupInfo #newAds').html(Object.getOwnPropertyNames(summary.newAds2).length);
                 //var html = '';
                 for (var i = 0; i < summary.newAds.length; i++) {
-                    var ad = Object.getOwnPropertyNames(summary.newAds2)[i];
+                    //var ad = Object.getOwnPropertyNames(summary.newAds2)[i];
+                    var ad = summary.newAds[i];
                     jQuery('<li/>', {
                         id: 'newAd' + ad,
                         text: ''
@@ -1171,7 +1241,7 @@ function onGetHistory(tx, results) {
                     jQuery('<a/>', {
                         id: 'newAdAnchor' + ad,
                         href: '#',
-                        text: ad
+                        text: summary.newAds2[ad].substring(0, 20) + '...'
                     }).appendTo($('#newAd' + ad));
 
                     $('#newAdAnchor' + ad).click(onAddItemClick.bind(ad));
@@ -1185,8 +1255,9 @@ function onGetHistory(tx, results) {
                 $('#changedPricesP').show();
                 $('#popupInfo #changedPriceAds').html(Object.getOwnPropertyNames(summary.newPrices2).length);
 
-                for (var i = 0; i < Object.getOwnPropertyNames(summary.newPrices2).length; i++) {
-                    var pr = Object.getOwnPropertyNames(summary.newPrices2)[i];
+                for (var i = 0; i < summary.newPrices.length; i++) {
+                    //var pr = Object.getOwnPropertyNames(summary.newPrices2)[i];
+                    var pr = summary.newPrices[i];
                     jQuery('<li/>', {
                         id: 'newPrice' + pr,
                         text: ''
@@ -1194,7 +1265,7 @@ function onGetHistory(tx, results) {
                     jQuery('<a/>', {
                         id: 'newPriceAnchor' + pr,
                         href: '#',
-                        text: pr
+                        text: summary.newPrices2[pr].substring(0, 23) + '...'
                     }).appendTo($('#newPrice' + pr));
 
                     $('#newPriceAnchor' + pr).click(onAddItemClick.bind(pr));
@@ -1380,6 +1451,10 @@ function drawChart(elementId, priceHistory) {
         }
         //postUnits: 'HRK'
     });
+}
+
+function getPosition(string, subString, index) {
+    return string.split(subString, index).join(subString).length;
 }
 
 //#endregion

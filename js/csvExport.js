@@ -2,7 +2,25 @@
 function createCsvOfSqlData() {
     var db = openDatabase('Njuskalo', '1.0', 'Njuskalo pracenje cijena oglasa', 2 * 1024 * 1024);
     db.transaction(function (tx) {
+
+        tx.executeSql('SELECT rowId, * FROM PriceHistory', [], function (tx, result) {
+            console.log('price history count: ' + result.rows.length);
+            var PriceHistory = [];
+            PriceHistory.push(['Advert id', 'Price HRK', 'Price EUR', 'Date']);
+            for (var i = 0; i < result.rows.length; i++) {
+                var r = result.rows[i];
+                PriceHistory.push([r.advertId, r.priceHRK, r.priceEUR, r.date]);
+            }
+            exportToCsv("PriceHistory" + customDateString() + '(_' + PriceHistory.length + ').csv', PriceHistory);
+        }, function (tx, err) { log('error fetching PriceHistory'); logObj(err); })
+
+
+        var e = new Date().getTime() + (1 * 1000);
+        while (new Date().getTime() <= e) { }
+
+
         tx.executeSql('SELECT rowId, * FROM Advert', [], function (tx, result) {
+            console.log('adverts count: ' + result.rows.length);
             var Adverts = [];
             Adverts.push(['Advert ID', 'Date last viewed', 'Date first viewed', 'Title', 'Main Description', 'username']);
             for (var i = 0; i < result.rows.length; i++) {
@@ -21,15 +39,10 @@ function createCsvOfSqlData() {
             localStorage.setItem('lastBackupDateNjuskalo', (new Date()).getTime());
         }, function (tx, err) { log('error fetching Adverts'); logObj(err); });
 
-        tx.executeSql('SELECT rowId, * FROM PriceHistory', [], function (tx, result) {
-            var PriceHistory = [];
-            PriceHistory.push(['Advert id', 'Price HRK', 'Price EUR', 'Date']);
-            for (var i = 0; i < result.rows.length; i++) {
-                var r = result.rows[i];
-                PriceHistory.push([r.advertId, r.priceHRK, r.priceEUR, r.date]);
-            }
-            exportToCsv("PriceHistory" + customDateString() + '(_' + PriceHistory.length + ').csv', PriceHistory);
-        }, function (tx, err) { log('error fetching PriceHistory'); logObj(err); })
+
+        setTimeout(function () {
+           
+        }, 2000);
     });
 }
 
