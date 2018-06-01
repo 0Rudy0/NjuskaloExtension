@@ -186,7 +186,8 @@ div.entity-thumbnail a img {
 
 .EntityList-item--New span:nth-child(4),
 .EntityList-item--New span:nth-child(5) {
-    display: none;
+    font-style: italic;
+    /*display: none;*/
 }
 
 a.historyBtn {

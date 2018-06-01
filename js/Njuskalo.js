@@ -1,4 +1,6 @@
 var allImages = {};
+var emailAddress = 'rudman@gmail.com';
+var emailSender = 'Njuskalo<postmaster@sandboxeb0dfefbe39f4aa1930b96995b957258.mailgun.org>';
 
 var messages = {
     insertNewPrice: 'insertNewPrice',
@@ -349,10 +351,18 @@ function insertDateFirstViewed(date) {
     var elapsedDays = Math.floor(((new Date().getTime() - new Date(date).getTime()) / 86400000));
     var elapsedDaysString = '(prije ' + elapsedDays + ' dana)';
     $('.base-entity-meta ul.meta-items li.meta-item:nth-child(2) span.label').innerHTML = 'Obnovljen: ';
-    jQuery('<li/>', {
-        class: 'date date--full',
-        text: 'Prvi puta viđen: ' + new Date(date).toLocaleDateString('hr') + ' ' + elapsedDaysString
-    }).appendTo($('.base-entity-meta ul.meta-items'));
+    if (elapsedDays == 0) {
+        jQuery('<li/>', {
+            class: 'date date--full',
+            text: 'Novi oglas'
+        }).appendTo($('.base-entity-meta ul.meta-items'));
+    }
+    else {
+        jQuery('<li/>', {
+            class: 'date date--full',
+            text: 'Prvi puta viđen: ' + new Date(date).toLocaleDateString('hr') + ' ' + elapsedDaysString
+        }).appendTo($('.base-entity-meta ul.meta-items'));
+    }
 }
 
 //#endregion
@@ -477,6 +487,8 @@ function checkBeforeMerge(newAdvert, oldAdvert, temp) {
             body += "<b>";
             body += formatFloat(newAdvert.priceHRK, 0) + " kn</b>";
             //return;
+
+            //send email
             $.ajax('https://api.mailgun.net/v3/sandboxeb0dfefbe39f4aa1930b96995b957258.mailgun.org/messages',
              {
                  type: "POST",
@@ -485,8 +497,8 @@ function checkBeforeMerge(newAdvert, oldAdvert, temp) {
                  data: {
                      "html": body,
                      "subject": subject,
-                     "from": "Njuskalo<postmaster@sandboxeb0dfefbe39f4aa1930b96995b957258.mailgun.org>",
-                     "to": "<rudman0@gmail.com>"
+                     "from": emailSender,
+                     "to": '<' + emailAddress + '>'
                  }, beforeSend: function (xhr) {
                      xhr.setRequestHeader("Authorization", "Basic " + btoa("api:key-4db5adc931d85d17232a809646820a99"));
                  },
@@ -949,18 +961,28 @@ function embedDateFirstViewed(jQueryElement, priceHistory) {
         //jQueryElement.removeClass('js-EntityList-item--Regular');
         jQueryElement.addClass('EntityList-item--New');
         jQueryElement.addClass('js-EntityList-item--New');
+        jQueryElement.find('.entity-pub-date')[0].innerHTML += '<br/>';
+
+        jQuery('<span/>', {
+            class: 'labelAlt',
+            text: 'Novi oglas'
+        }).appendTo(jQueryElement.find('.entity-pub-date')[0]);
+        //var date = priceHistory.length == 0 ? new Date() : new Date(priceHistory[0].dateFirstViewed);
+    }
+    else {
+        jQueryElement.find('.entity-pub-date')[0].innerHTML += '<br/>';
+        jQuery('<span/>', {
+            class: 'labelAlt',
+            text: 'Prvi puta viđen - '
+        }).appendTo(jQueryElement.find('.entity-pub-date')[0]);
+        var date = priceHistory.length == 0 ? new Date() : new Date(priceHistory[0].dateFirstViewed);
+        jQuery('<span/>', {
+            class: 'date date--full',
+            text: date.toLocaleDateString('hr') + ' ' + elapsedDaysString
+        }).appendTo(jQueryElement.find('.entity-pub-date')[0]);
     }
     jQueryElement.find('.entity-pub-date span.label')[0].innerHTML = 'Obnovljen - ';
-    jQueryElement.find('.entity-pub-date')[0].innerHTML += '<br/>';
-    jQuery('<span/>', {
-        class: 'labelAlt',
-        text: 'Prvi puta viđen - '
-    }).appendTo(jQueryElement.find('.entity-pub-date')[0]);
-    var date = priceHistory.length == 0 ? new Date() : new Date(priceHistory[0].dateFirstViewed);
-    jQuery('<span/>', {
-        class: 'date date--full',
-        text: date.toLocaleDateString('hr') + ' ' + elapsedDaysString
-    }).appendTo(jQueryElement.find('.entity-pub-date')[0]);
+   
 }
 
 function insertChart(that) {
@@ -1241,7 +1263,7 @@ function onGetHistory(tx, results) {
                     jQuery('<a/>', {
                         id: 'newAdAnchor' + ad,
                         href: '#',
-                        text: summary.newAds2[ad].substring(0, 20) + '...'
+                        text: summary.newAds2[ad].substring(0, 18) + '...'
                     }).appendTo($('#newAd' + ad));
 
                     $('#newAdAnchor' + ad).click(onAddItemClick.bind(ad));
@@ -1265,7 +1287,7 @@ function onGetHistory(tx, results) {
                     jQuery('<a/>', {
                         id: 'newPriceAnchor' + pr,
                         href: '#',
-                        text: summary.newPrices2[pr].substring(0, 23) + '...'
+                        text: summary.newPrices2[pr].substring(0, 18) + '...'
                     }).appendTo($('#newPrice' + pr));
 
                     $('#newPriceAnchor' + pr).click(onAddItemClick.bind(pr));
