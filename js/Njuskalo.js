@@ -1,3 +1,23 @@
+var activeOn = [
+    "https://www.njuskalo.hr/motori*",
+    "https://www.njuskalo.hr/*&categoryId=1148&*",
+    "https://www.njuskalo.hr/*&categoryId=12046&*",
+    "https://www.njuskalo.hr/sportski-motori*",
+    "https://www.njuskalo.hr/cestovni-motori*",
+    "https://www.njuskalo.hr/auti*",
+    "https://www.njuskalo.hr/rabljeni-auti*",
+    "https://www.njuskalo.hr/novi-auti*",
+    "https://www.njuskalo.hr/karambolirani-auti*",
+    "https://www.njuskalo.hr/prodaja-kuca*",
+    "https://www.njuskalo.hr/prodaja-stanova*",
+    "https://www.njuskalo.hr/nekretnine*",
+    "https://www.njuskalo.hr/novogradnja*",
+    "https://www.njuskalo.hr/*&categoryId=9580&*",
+    "https://www.njuskalo.hr/*&categoryId=9579&*",
+    "https://www.njuskalo.hr/*&categoryId=12404&*",
+    "https://www.njuskalo.hr/elektricni-bicikli*"
+]
+
 var allImages = {};
 var emailAddress = 'rudman@gmail.com';
 var emailSender = 'Njuskalo<postmaster@sandboxeb0dfefbe39f4aa1930b96995b957258.mailgun.org>';
@@ -78,6 +98,8 @@ chrome.runtime.onMessage.addListener(
   });
 
 (function () {
+    if (!isCurrentOnActivePage())
+        return;
     //dbase.deleteTables();
     //setTimeout(function () {
     //    dbase.createTables();
@@ -942,7 +964,8 @@ function embedPriceHistory(jQueryElement, priceHistory, itemId) {
 
     if (priceHistory.length > 1) {
         $(jQueryElement.find('.price-items.cf .price--hrk')[0]).attr('title', (priceHistory[priceHistory.length - 1].priceHRK - priceHistory[priceHistory.length - 2].priceHRK) + ' kn');
-        $(jQueryElement.find('.price-items.cf .price--eur')[0]).attr('title', (priceHistory[priceHistory.length - 1].priceEUR - priceHistory[priceHistory.length - 2].priceEUR) + ' €');
+        if ($(jQueryElement.find('.price-items.cf .price--eur').length > 0))
+            $(jQueryElement.find('.price-items.cf .price--eur')[0]).attr('title', (priceHistory[priceHistory.length - 1].priceEUR - priceHistory[priceHistory.length - 2].priceEUR) + ' €');
     }
 }
 
@@ -982,7 +1005,7 @@ function embedDateFirstViewed(jQueryElement, priceHistory) {
         }).appendTo(jQueryElement.find('.entity-pub-date')[0]);
     }
     jQueryElement.find('.entity-pub-date span.label')[0].innerHTML = 'Obnovljen - ';
-   
+
 }
 
 function insertChart(that) {
@@ -1145,7 +1168,7 @@ function orderSummary() {
 
     summary.newPrices = orderResult.array;
     summary.newPrices2 = orderResult.object;
-   
+
 }
 
 function order(array, object) {
@@ -1201,6 +1224,17 @@ function order(array, object) {
 
 //#region reusing
 
+function isCurrentOnActivePage() {
+    var curr = window.location.href;
+    for (var i = 0; i < activeOn.length; i++) {
+        var regEx = new RegExp(activeOn[i]);
+        if (regEx.exec(curr) != null) {
+            return true;
+        }
+    }
+    return false;
+}
+
 function cssElement(url) {
     var link = document.createElement("link");
     link.href = url;
@@ -1211,11 +1245,13 @@ function cssElement(url) {
 
 function getPrices(element) {
     var priceHRK = $(element).find('.price.price--hrk')[0].innerText.replace(' kn', '').trim();
-    var priceEUR = $(element).find('.price.price--eur')[0].innerText.replace(' € ~', '').trim();
+    var priceEUR = 0;
+    if ($(element).find('.price.price--eur').length > 0)
+        priceEUR = $(element).find('.price.price--eur')[0].innerText.replace(' € ~', '').trim();
     while (priceHRK.indexOf('.') > -1) {
         priceHRK = priceHRK.replace('.', '');
     }
-    while (priceEUR.indexOf('.') > -1) {
+    while (priceEUR.toString().indexOf('.') > -1) {
         priceEUR = priceEUR.replace('.', '');
     }
     priceHRK = parseInt(priceHRK);
