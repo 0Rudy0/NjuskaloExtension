@@ -78,15 +78,7 @@ function toggleAutoScanningFunction() {
     });
 }
 
-function setActionOnDuplicate(e) {
-	actionOnDuplicate = e.currentTarget.getAttribute('data-action');
-	var btns = document.getElementsByClassName('btn-3');
-	for (var i = 0; i < btns.length; i++) {
-		btns[i].className = btns[i].className.replace('active', '');
-	}
-	e.currentTarget.className += ' active';
-	localStorage.setItem('savedAction', actionOnDuplicate);
-}
+
 
 chrome.runtime.onMessage.addListener(
   function (request, sender, sendResponse) {
@@ -100,8 +92,8 @@ chrome.runtime.onMessage.addListener(
 
 //alert('hello');
 
-const docStyle = document.documentElement.style
-const aElem = document.querySelector('a')
-const boundingClientRect = aElem.getBoundingClientRect()
+//const docStyle = document.documentElement.style
+//const aElem = document.querySelector('a')
+//const boundingClientRect = aElem.getBoundingClientRect()
 
 

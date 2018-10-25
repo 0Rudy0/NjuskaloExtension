@@ -2,14 +2,24 @@ var dbase = (function () {
 	var self = this;
 	var db = openDatabase('Njuskalo', '1.0', 'Njuskalo pracenje cijena oglasa', 2 * 1024 * 1024);
 	var allFinished = [];
+	var adsStack = [];
+	var newAdsStack = [];
+	var newPriceStack = [];
 
 	var insertNewPrice = function (advertId, priceHRK, priceEUR, title, mainDesc, username, url, callback) {
+	    adsStack.push(advertId);
+	    //console.log('check new ad price ' + adsStack.length);
 		db.transaction(function (tx) {			
-			tx.executeSql('SELECT * FROM Advert where advertId = ?', [advertId], function (tx, results) {
-			    if (results.rows.length == 0) {
+		    tx.executeSql('SELECT * FROM Advert where advertId = ?', [advertId], function (tx, results) {
+		        //console.log(advertId + ': ' + results.rows.length);
+		        if (results.rows.length == 0) {
+		            newAdsStack.push(advertId);
+		            //console.log('insert new ad ' + newAdsStack.length);
 					checkIfFakeNew(advertId, priceHRK, priceEUR, title, mainDesc, username, url, callback);
 				}
-			    else {
+		        else {
+		            newPriceStack.push(advertId);
+		            //console.log('insert new price ' + newPriceStack.length);
 					updateAdvertData(tx, advertId, title, mainDesc, username);
 					//updateTitle(tx, advertId, title);
 					//updateMainDesc(tx, advertId, mainDesc);
@@ -34,12 +44,16 @@ var dbase = (function () {
 							}
 						}
 					});
-				}
+		        }
+		        if ((newAdsStack.length + newPriceStack.length) == adsStack.length) {
+		            console.log('all ads procesed. newPrices' + newPriceStack.length + '; newAds' + newAdsStack.length);
+		        }
 			});
 		});
 	}
 
 	var checkIfFakeNew = function (advertId, priceHRK, priceEUR, title, mainDesc, username, url, callback) {
+	    //console.log('checking if fake new ' + advertId);
 
 		//ako nema dovoljno elemenata u titleu (barem 5) za identicifirati oglas, jednostavno ga spremi kao novi
 	    if ((title.match(new RegExp(';', 'g')) || []).length < 5) {
@@ -52,6 +66,7 @@ var dbase = (function () {
 	            username: username,
 	            url: url
 	        }
+	        console.log('nema dovoljno elemenata u titleu, callback ' + advertId + '- ' + title);
 	        callback(newAdvert); //send email of new advert
 			insertNewAdvert(advertId, priceHRK, priceEUR, title, mainDesc, username);
 			return;
@@ -102,6 +117,7 @@ var dbase = (function () {
 					        username: username,
 					        url: url
 					    }
+                        //console.log('pronadjen slican oglas, callback')
 					    callback(newAdvert); //send email of new advert
 					    insertNewAdvert(advertId, priceHRK, priceEUR, title, mainDesc, username);					   
 					}
@@ -116,6 +132,7 @@ var dbase = (function () {
 				        username: username,
 				        url: url
 				    }
+				    //console.log('nije pronadjen slican oglas, callback ' + advertId);
 				    callback(newAdvert); //send email of new advert
 					insertNewAdvert(advertId, priceHRK, priceEUR, title, mainDesc, username);
 				}
@@ -477,8 +494,7 @@ var activeOn = [
 ]
 
 var allImages = {};
-var emailAddress = 'rudman@gmail.com';
-var emailSender = 'Njuskalo<postmaster@sandboxeb0dfefbe39f4aa1930b96995b957258.mailgun.org>';
+var emailsSent = 0;
 
 var messages = {
     insertNewPrice: 'insertNewPrice',
@@ -504,7 +520,7 @@ var summary = {
     newPrices: [],
     newPrices2: {}
 };
-var refreshPattern = 5; //in minutes
+//var settings.refreshInt = 5; //in minutes
 var startTime = 0;
 
 chrome.runtime.onMessage.addListener(
@@ -550,14 +566,17 @@ chrome.runtime.onMessage.addListener(
               sessionStorage.setItem('scanningActive', true);
               location.reload();
               //setTimeout(function () {
-              //}, refreshPattern * 60 * 60);
+              //}, settings.refreshInt * 60 * 60);
           }
       }
   });
 
 (function () {
+    AppendElements();
     if (!isCurrentOnActivePage())
         return;
+
+    //emailjs.init(emailJSUserId);
     //dbase.deleteTables();
     //setTimeout(function () {
     //    dbase.createTables();
@@ -567,15 +586,15 @@ chrome.runtime.onMessage.addListener(
 
         setTimeout(function () {
             location.reload();
-        }, refreshPattern * 1000 * 60);
+        }, settings.refreshInt * 1000 * 60);
 
-        $('body').append('<div id="scanningIndicator">Scanning every <br>' + refreshPattern + ' minutes</div>');
+        $('body').append('<div id="scanningIndicator">Scanning every <br>' + settings.refreshInt + ' minutes</div>');
         $('body').append('<div id="scanningIndicatorTimer"></div>');
 
         startTime = (new Date()).getTime();
         setInterval(function () {
             var diffSeconds = ((new Date()).getTime() - startTime) / 1000;
-            var remaining = (refreshPattern * 60) - diffSeconds;
+            var remaining = (settings.refreshInt * 60) - diffSeconds;
             if (remaining < 0.1) {
                 $('#scanningIndicatorTimer').html('Refreshing...');
             }
@@ -588,30 +607,7 @@ chrome.runtime.onMessage.addListener(
 
     dbase.createTables();
 
-    $('.UserNav-auth .UserNav-items').append('<li class="UserNav-item"><a href="#" class="item-bit link backupSqlData">Backupiraj podatke</a></li>');
-    $('.UserNav-auth .UserNav-items').append('<li class="UserNav-item"><a href="#" class="item-bit link importSqlData">Import</a></li>');
-    $('..UserNav-auth .UserNav-items .backupSqlData').click(function () {
-        createCsvOfSqlData();
-    });
-    $('..UserNav-auth .UserNav-items .importSqlData').click(function () {
-        $('body').append('<div id="importDataModal"><button class="close">close</button><textarea id="advertsCsvData">ADVERTS</textarea><textarea id="priceHistoryCsvData">PRICE HISTORY</textarea><button id="startImport">Pokreni</button></div>');
-        $('#importDataModal .close').click(function () {
-            $('#importDataModal').remove();
-        });
 
-        $('#importDataModal #startImport').click(function () {
-            dbase.deleteTables();
-            setTimeout(function () {
-                dbase.createTables();
-            }, 1000);
-
-            setTimeout(function () {
-                dbase.insertAdvertsBulk($('#advertsCsvData').val());
-                dbase.insertPricesBulk($('#priceHistoryCsvData').val());
-                //$('#importDataModal').remove();
-            }, 3000);
-        });
-    });
 
     sessionStorage.removeItem('pauseAutoPaging');
     if (sessionStorage.getItem("autoPaging")) {
@@ -942,54 +938,18 @@ function setAdditionalInfo(that, isLast) {
 }
 
 function checkBeforeMerge(newAdvert, oldAdvert, temp) {
+    //console.log('check before merge ' + newAdvert.advertId);
     if (oldAdvert == null && newAdvert == null) {
         //console.log(temp);
     }
     else if (oldAdvert == null && newAdvert != null) {
-        if (sessionStorage.getItem('scanningActive') != null) {
-
-            newAdvert.thumbnail = $('li[data-options="{\\"hasCompare\\":true,\\"id\\":' + newAdvert.advertId + '}"] .entity-thumbnail a>img')[0].src;
-
-            var subject = "Novi oglas - " + newAdvert.title.substring(0, newAdvert.title.indexOf(";"));
-            while (newAdvert.title.indexOf(";") > -1) {
-                newAdvert.title = newAdvert.title.replace(";", " - ");
-            }
-
-            //console.log(newAdvert.advertId);
-            //console.log(newAdvert.title);
-            //console.log(newAdvert.thumbnail);
-            var body = "<img src=\"" + newAdvert.thumbnail + "\" alt=\"thumbnail\">";
-            body += "<br>";
-            body += "<br>";
-            body += "<a href=\"" + newAdvert.url + "\" target=\"_blank\" style=\"font-size:12pt;\">" + newAdvert.title + "</a>";
-            body += "<br>";
-            body += "<p style=\"color:black;\">" + newAdvert.mainDesc + "</p>";
-            body += "<b>";
-            body += formatFloat(newAdvert.priceHRK, 0) + " kn</b>";
-            //return;
-
-            //send email
-            $.ajax('https://api.mailgun.net/v3/sandboxeb0dfefbe39f4aa1930b96995b957258.mailgun.org/messages',
-             {
-                 type: "POST",
-                 username: 'api',
-                 password: '4db5adc931d85d17232a809646820a99',
-                 data: {
-                     "html": body,
-                     "subject": subject,
-                     "from": emailSender,
-                     "to": '<' + emailAddress + '>'
-                 }, beforeSend: function (xhr) {
-                     xhr.setRequestHeader("Authorization", "Basic " + btoa("api:key-4db5adc931d85d17232a809646820a99"));
-                 },
-                 success: function (a, b, c) {
-                     console.log('mail sent: ', b);
-                 }.bind(this),
-                 error: function (xhr, status, errText) { console.log('mail sent failed: ', xhr.responseText); }
-             })
-        }
+        //console.log('send new email ' + newAdvert.advertId);
+        sendNewAdvEmailNotification(newAdvert);
     }
     else if (newAdvert != null && oldAdvert != null) {
+        console.log('duplicate advert ' + newAdvert.advertId);
+        sendNewAdvEmailNotification(newAdvert);
+
         //console.log('found duplicate');
         $.get(chrome.extension.getURL('html/mergeModal.html'))
         .done((function (data) {
@@ -1020,6 +980,9 @@ function checkBeforeMerge(newAdvert, oldAdvert, temp) {
             title = newAdvert.title;
             while (title.indexOf(';') > 0) {
                 title = title.replace(';', '<br/>');
+            }
+            while (title.indexOf('-') > 0) {
+                title = title.replace('-', '<br/>');
             }
 
             $(mId + ' .rightContent h3').html($(mId + ' .rightContent h3').html() + ' (ID: ' + newAdvert.advertId + ')');
@@ -1090,6 +1053,179 @@ function checkBeforeMerge(newAdvert, oldAdvert, temp) {
                 }
             });
         }));
+    }
+}
+
+function sendNewAdvEmailNotification(newAdvert) {
+    if (sessionStorage.getItem('scanningActive') != null && emailsSent > -1) {
+        newAdvert.thumbnail = $('li[data-options="{\\"hasCompare\\":true,\\"id\\":' + newAdvert.advertId + '}"] .entity-thumbnail a>img')[0].dataset.src.substring(2);
+
+        var parts = newAdvert.title.split(';');
+        var subject = "Novi oglas - " + parts[0] + ' ' + parts[1] + ' ' + parts[3] + ' (' + formatFloat (newAdvert.priceHRK, 0) + ' kn)';
+        while (newAdvert.title.indexOf(";") > -1) {
+            newAdvert.title = newAdvert.title.replace(";", " - ");
+        }
+
+        //console.log(newAdvert.advertId);
+        //console.log(newAdvert.title);
+        //console.log(newAdvert.thumbnail);
+        var body = "<img src=\"" + newAdvert.thumbnail + "\" alt=\"thumbnail\">";
+        body += "<br>";
+        body += "<br>";
+        body += "<a href=\"" + newAdvert.url + "\" target=\"_blank\" style=\"font-size:12pt;\">" + newAdvert.title + "</a>";
+        body += "<br>";
+        body += "<p style=\"color:black;\">" + newAdvert.mainDesc + "</p>";
+        body += "<b>";
+        body += formatFloat(newAdvert.priceHRK, 0) + " kn</b>";
+        body += "<b>";
+        body += formatFloat(newAdvert.priceEUR, 0) + " €</b>";
+        //return;
+
+        if (settings == null)
+            settings = getSettings();
+
+        if (settings.email != null && settings.email.length > 0 &&
+            settings.emailJsTemplateId != null && settings.emailJsTemplateId.length > 0 &&
+            settings.emailJsUserId != null && settings.emailJsUserId.length > 0) {
+
+            //sendWithSendGrid(subject, body, 'Njuskalo@sendgrid.com', settings.email);
+            //sendWithMailgun(subject, body, emailSender, settings.email);
+            //sendWithElastic(subject, body, 'postmaster@codius.co', settings.email)
+            console.log('sending email...');
+            sendWithEmailJS(subject, body, settings.email);
+            emailsSent++;
+        }
+        else {
+            alert('Podaci za slanje email nedostaju');
+        }
+    }
+    else {
+        //console.log('did not send email because ' + emailsSent);
+    }
+}
+
+function sendWithSendGrid(subject, body, emailSender, receiver) {
+    var data = JSON.stringify({
+        "personalizations": [
+          {
+              "to": [
+                {
+                    "email": receiver,
+                    "name": "John Doe"
+                }
+              ],
+              "subject": subject
+          }
+        ],
+        "from": {
+            "email": emailSender,
+            "name": "Sam Smith"
+        },
+        "reply_to": {
+            "email": emailSender,
+            "name": "Sam Smith"
+        },
+        "content": [
+          {
+              "type": "text/plain",
+              "value": body
+          }
+        ]
+    });
+
+    var emailSettings = {
+        "async": true,
+        "crossDomain": true,
+        "url": "https://api.sendgrid.com/v3/mail/send",
+        "method": "POST",
+        "headers": {
+            "authorization": "Bearer " + sendGridApiKey,
+            "content-type": "application/json"
+        },
+        "processData": false,
+        "data": data
+    }
+
+    //$.ajax(emailSettings).done(function (response) {
+    //    console.log(response);
+    //});
+
+    //$.ajax({
+    //    type: "POST",
+    //    url: "https://api.sendgrid.com/v3/mail/send",
+    //    headers: {
+    //        'Authorization': 'Bearer ' + sendGridApiKey
+    //    },
+    //    data: {
+    //        'to': receiver,
+    //        'from': emailSender,
+    //        'subject': subject,
+    //        'html': body,
+    //    }
+    //}).done(function (response) {
+    //    console.log("Email sent");
+    //});
+}
+
+function sendWithMailgun(subject, body, emailSender, receiver) {
+    $.ajax({
+        type: "POST",
+        url: 'https://api.mailgun.net/v3/sandboxeb0dfefbe39f4aa1930b96995b957258.mailgun.org/messages',
+        username: 'api',
+        dataType: 'text',
+        //xhrFields: {
+        //    withCredentials: true
+        //},
+        headers: {
+            //'accept': 'application/json',
+            'content-type': 'application/x-www-form-urlencoded',
+            //"Access-Control-Allow-Methods": "GET,PUT,POST,DELETE,PATCH,OPTIONS",
+            //"Access-Control-Allow-Headers": "Authorization",
+            //"Authorization": "Basic " + btoa(mailgunApiKey)
+        },
+        password: mailgunPassword,
+        data: {
+            "html": body,
+            "subject": subject,
+            "from": emailSender,
+            "to": '<' + receiver + '>'
+        },
+        //beforeSend: function (xhr) {
+        //    xhr.setRequestHeader("Authorization", "Basic " + btoa(mailgunApiKey));
+        //},
+        success: function (a, b, c) {
+            console.log('mail sent: ', b);
+        }.bind(this),
+        error: function (xhr, status, errText) { console.log('mail sent failed: ', xhr.responseText); }
+    })
+}
+
+function sendWithElastic(subject, body, from, to) {
+    Email.send(from,
+        to,
+        subject,
+        'test 2 email',
+        "mail.codius.co",
+        "postmaster@codius.co",
+        "rudx@1234",
+        function done(message) { alert("sent to " + to) });
+}
+
+function sendWithEmailJS(subject, body, to) {
+
+    var service_id = 'default_service';
+    var template_id = settings.emailJsTemplateId;
+    var template_params = {
+        subject: subject,
+        emailTo: to,
+        message: body
+    };
+
+    try {
+        emailjs.send(service_id, template_id, template_params);  
+    }
+    catch (ex) {
+        alert('error sending email');
     }
 }
 

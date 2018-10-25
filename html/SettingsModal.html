@@ -1,0 +1,93 @@
+﻿<div id="settingsModal" class="form-standard">
+    <h3 class="block-standard-title">Postavke Njuskalo ekstenzije</h3>
+    <div class="form-items">
+        <div class="form-grid fullW">
+            <div class="form-grid-item form-grid-item--full">
+                <div class="form-item">
+                    <label class="form-label" style="display: inline-block; margin-right: 20px;">Odredi akciju prilikom nailaska na potencijalni oglas-duplikat dok traje AUTO-PAGING</label>
+                    <a href="#" class="button-standard button-standard--alpha" data-action="stop">
+                        <span class="">
+                            Stani
+                        </span>
+                    </a>
+                    <a href="#" class="button-standard button-standard--alpha" data-action="insertAsNew">
+                        <span class="">
+                            Unesi kao novi
+                        </span>
+                    </a>
+                    <a href="#" class="button-standard button-standard--alpha" data-action="merge">
+                        <span class="">
+                            Auto merge
+                        </span>
+                    </a>
+                </div>
+            </div>
+        </div>
+       
+        <div style="clear: left"></div>
+    </div>
+
+    <h3 class="block-standard-title">Postavke za slanje emaila</h3>
+
+    <div class="form-items">
+        <div class="form-grid">
+            <div class="form-grid-item form-grid-item--full">
+                <div class="form-item">
+                    <label class="form-label">Email za slanje obavijesti o novom oglasu</label>
+                    <input type="text" id="njuskaloEmailForNewAdv" value="" class="form-field-textual form-field-text" />
+                </div>
+
+            </div>
+        </div>
+        <div class="form-grid">
+            <div class="form-grid-item form-grid-item--full">
+                <div class="form-item">
+                    <label class="form-label">Koliko često scan refresha (u minutama)</label>
+                    <select id="njuskaloRefreshInt" value="2014" class="form-field-textual form-field-select">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                        <option value="10">10</option>
+                        <option value="15">15</option>
+                        <option value="20">20</option>
+                        <option value="30">30</option>
+                        <option value="40">40</option>
+                        <option value="50">50</option>
+                        <option value="60">60</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="form-grid">
+            <div class="form-grid-item form-grid-item--full">
+                <div class="form-item">
+                    <label class="form-label">EmailJS user id</label>
+                    <input type="text" id="emailjsUserId" value="" class="form-field-textual form-field-text" />
+                </div>
+            </div>
+        </div>
+        <div class="form-grid">
+            <div class="form-grid-item form-grid-item--full">
+                <div class="form-item">
+                    <label class="form-label">EmailJS template ID</label>
+                    <input type="text" id="emailjsTemplateId" value="" class="form-field-textual form-field-text" />
+                </div>
+            </div>
+        </div>
+        <a href="#" style="position: absolute; bottom: 10px; right: 10px;" id="emailSetupTutorialBtn" class="button-standard button-standard--beta">
+            <span class="">
+                Upute za slanje emaila
+            </span>
+        </a>
+        <div style="clear: left"></div>
+    </div>
+
+   
+
+</div>

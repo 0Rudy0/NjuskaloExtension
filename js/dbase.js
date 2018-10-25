@@ -2,14 +2,24 @@
 	var self = this;
 	var db = openDatabase('Njuskalo', '1.0', 'Njuskalo pracenje cijena oglasa', 2 * 1024 * 1024);
 	var allFinished = [];
+	var adsStack = [];
+	var newAdsStack = [];
+	var newPriceStack = [];
 
 	var insertNewPrice = function (advertId, priceHRK, priceEUR, title, mainDesc, username, url, callback) {
+	    adsStack.push(advertId);
+	    //console.log('check new ad price ' + adsStack.length);
 		db.transaction(function (tx) {			
-			tx.executeSql('SELECT * FROM Advert where advertId = ?', [advertId], function (tx, results) {
-			    if (results.rows.length == 0) {
+		    tx.executeSql('SELECT * FROM Advert where advertId = ?', [advertId], function (tx, results) {
+		        //console.log(advertId + ': ' + results.rows.length);
+		        if (results.rows.length == 0) {
+		            newAdsStack.push(advertId);
+		            //console.log('insert new ad ' + newAdsStack.length);
 					checkIfFakeNew(advertId, priceHRK, priceEUR, title, mainDesc, username, url, callback);
 				}
-			    else {
+		        else {
+		            newPriceStack.push(advertId);
+		            //console.log('insert new price ' + newPriceStack.length);
 					updateAdvertData(tx, advertId, title, mainDesc, username);
 					//updateTitle(tx, advertId, title);
 					//updateMainDesc(tx, advertId, mainDesc);
@@ -34,12 +44,16 @@
 							}
 						}
 					});
-				}
+		        }
+		        if ((newAdsStack.length + newPriceStack.length) == adsStack.length) {
+		            console.log('all ads procesed. newPrices' + newPriceStack.length + '; newAds' + newAdsStack.length);
+		        }
 			});
 		});
 	}
 
 	var checkIfFakeNew = function (advertId, priceHRK, priceEUR, title, mainDesc, username, url, callback) {
+	    //console.log('checking if fake new ' + advertId);
 
 		//ako nema dovoljno elemenata u titleu (barem 5) za identicifirati oglas, jednostavno ga spremi kao novi
 	    if ((title.match(new RegExp(';', 'g')) || []).length < 5) {
@@ -52,6 +66,7 @@
 	            username: username,
 	            url: url
 	        }
+	        console.log('nema dovoljno elemenata u titleu, callback ' + advertId + '- ' + title);
 	        callback(newAdvert); //send email of new advert
 			insertNewAdvert(advertId, priceHRK, priceEUR, title, mainDesc, username);
 			return;
@@ -102,6 +117,7 @@
 					        username: username,
 					        url: url
 					    }
+                        //console.log('pronadjen slican oglas, callback')
 					    callback(newAdvert); //send email of new advert
 					    insertNewAdvert(advertId, priceHRK, priceEUR, title, mainDesc, username);					   
 					}
@@ -116,6 +132,7 @@
 				        username: username,
 				        url: url
 				    }
+				    //console.log('nije pronadjen slican oglas, callback ' + advertId);
 				    callback(newAdvert); //send email of new advert
 					insertNewAdvert(advertId, priceHRK, priceEUR, title, mainDesc, username);
 				}

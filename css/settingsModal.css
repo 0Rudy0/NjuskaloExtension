@@ -1,0 +1,104 @@
+﻿#settingsModal {
+    /*position: fixed;*/
+    /*width: 200px;*/
+    /*height: 500px;*/
+    background-color: #fdcd00;
+    margin-bottom: 10px;
+    border: 1px solid white;
+    /*transition-duration: 0.5s;*/
+    /*transform: scaleX(0);*/
+    border-radius: 4px;
+    /*display: none;*/
+    height: 0;
+    overflow: hidden;
+    transition-property: height;
+    transition-duration: 0.5s;
+    position: relative;
+}
+
+#settingsModal.show {
+    display: block;
+    /*border: 1px solid white;*/
+    border: 1px solid #d0d0ce;
+    height: 305px;
+    /*transform: scaleX(1);*/
+}
+
+#settingsModal .block-standard-title {
+    background-color: black;
+    color: #d0d0ce;
+    font-weight: normal;
+    border: none !important;
+    text-shadow: none;
+    text-transform: none;
+}
+
+#settingsModal.form-standard .form-item {
+    border-top: 1px solid white !important;
+}
+
+/*.UserNav .link:focus {
+    background-color: transparent !important;
+    color: white !important;
+}*/
+
+/*.UserNav .link:active,
+.UserNav .link:focus {
+    background-color: #d6af00 !important;
+    color: black !important;
+}*/
+
+#settingsModal .form-grid {
+    float: left;
+    width: 50%;
+}
+
+#settingsModal .form-grid.fullW {
+    width: 100%;
+}
+
+#settingsModal .button-standard.active {
+    background-color: #147aa1 !important;
+    background-image: none !important;
+}
+
+#emailSetupTutorial {
+    position: fixed;
+    width: 500px;
+    height: 350px;
+    background-color: white;
+    border: 2px solid black;
+    padding: 20px;
+    left: calc(50% - 250px);
+    top: calc(50% - 175px);
+    transition-duration: 0.6s;
+    transform: scale(0);
+    opacity: 0.1;
+}
+
+#emailSetupTutorial.showing {
+    transform: scale(1);
+    opacity: 1;
+}
+
+#emailSetupTutorial .closeBtn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background-color: black;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    color: white;
+    padding: 2px 0 0 6px;
+}
+
+#emailSetupTutorial .closeBtn:hover {
+    background-color: #5a5a5a;
+}
+
+#emailSetupTutorial .closeBtn:active {
+    transform: scale(0.9);
+}
+
+

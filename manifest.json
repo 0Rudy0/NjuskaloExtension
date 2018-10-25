@@ -43,7 +43,8 @@
             "css/mergeModal.css",
             "css/morris.css",
             "css/Njuskalo.css",
-            "css/prettify.min.css"
+            "css/prettify.min.css",
+            "css/settingsModal.css"
           ],
           "js": [
             "js/jquery.min.js",
@@ -54,6 +55,9 @@
             "js/dbase.js",
             "js/jssor.slider.min.js",
             "js/imageSliderInit.js",
+            "js/email.min.js",
+            "js/NjuskaloAppending.js",
+            "js/ApiKeys.js",
             "js/Njuskalo.js"
           ]
         }
