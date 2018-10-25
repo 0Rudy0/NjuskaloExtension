@@ -730,9 +730,9 @@ function sendWithElastic(subject, body, from, to) {
         to,
         subject,
         'test 2 email',
-        "mail.codius.co",
-        "postmaster@codius.co",
-        "rudx@1234",
+        elasticSmtp,
+        elasticEmail,
+        elasticPass,
         function done(message) { alert("sent to " + to) });
 }
 
