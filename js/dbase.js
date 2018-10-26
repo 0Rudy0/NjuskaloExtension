@@ -33,7 +33,8 @@
 							var foundSamePrice = false;
 							var lastDate = historyResults.rows[0].date;
 							for (var i = 0; i < historyResults.rows.length; i++) {
-							    if (historyResults.rows[i].date == lastDate && (historyResults.rows[i].priceHRK == priceHRK || (priceEUR == 0 || historyResults.rows[i].priceEUR == priceEUR))) {
+							    if (historyResults.rows[i].date == lastDate &&
+                                    ((historyResults.rows[i].priceHRK == priceHRK && priceEUR == 0) || (priceEUR > 0 && historyResults.rows[i].priceEUR == priceEUR))) {
 									foundSamePrice = true;
 									break;
 								}
