@@ -320,3 +320,12 @@ a.historyBtn > span {
 iframe {
     display: none;
 }
+
+label.invalidSetting {
+    color: red !important;
+}
+
+input.invalidSetting {
+    border-color: red !important;
+    box-shadow: 0px 0px 15px red !important;
+}

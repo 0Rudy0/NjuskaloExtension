@@ -50,19 +50,23 @@ function AppendElements() {
            }
 
            $('#njuskaloEmailForNewAdv').on('blur', function () {
+               //console.log('saving settings on blur of njuskaloEmailForNewAdv');
                settings.email = $('#njuskaloEmailForNewAdv').val();
                saveSettings();
            });
            $('#emailjsUserId').on('blur', function () {
+               //console.log('saving settings on blur of emailjsUserId');
                settings.emailJsUserId = $('#emailjsUserId').val();
                saveSettings();
-               emailjs.init(emailJSUserId);
+               emailjs.init(settings.emailJSUserId);
            });
            $('#emailjsTemplateId').on('blur', function () {
+               //console.log('saving settings on blur of emailjsTemplateId');
                settings.emailJsTemplateId = $('#emailjsTemplateId').val();
                saveSettings();
            });
            $('#njuskaloRefreshInt').on('change', function () {
+               //console.log('saving settings on blur of njuskaloRefreshInt');
                settings.refreshInt = $('#njuskaloRefreshInt').val();
                saveSettings();
            });
@@ -123,7 +127,7 @@ function getSettings() {
             settings = JSON.parse(obj);
 
             if (settings.emailJsUserId != null) {
-                emailjs.init(emailJSUserId);
+                emailjs.init(settings.emailJSUserId);
             }
         }
         else {
@@ -153,5 +157,12 @@ function getSettings() {
 
 function saveSettings() {
     localStorage.setItem('NjuskaloExtUserSettings', JSON.stringify(settings));
+
+    $('#emailjsUserId').prev().removeClass('invalidSetting');
+    $('#emailjsUserId').removeClass('invalidSetting');
+    $('#emailjsTemplateId').prev().removeClass('invalidSetting');
+    $('#emailjsTemplateId').removeClass('invalidSetting');
+    $('#njuskaloEmailForNewAdv').prev().removeClass('invalidSetting');
+    $('#njuskaloEmailForNewAdv').removeClass('invalidSetting');
     //console.log(settings);
 }

@@ -86,10 +86,12 @@ chrome.runtime.onMessage.addListener(
               $('#scanningIndicatorTimer').remove();
           }
           else {
-              console.log('pokreni scanning');
+              if (validateEmailJsSettings()) {
+                  console.log('pokreni scanning');
 
-              sessionStorage.setItem('scanningActive', true);
-              location.reload();
+                  sessionStorage.setItem('scanningActive', true);
+                  location.reload();
+              }
               //setTimeout(function () {
               //}, settings.refreshInt * 60 * 60);
           }
@@ -109,24 +111,31 @@ chrome.runtime.onMessage.addListener(
 
     if (sessionStorage.getItem('scanningActive') != null) {
 
-        setTimeout(function () {
-            location.reload();
-        }, settings.refreshInt * 1000 * 60);
+        if (validateEmailJsSettings()) {
 
-        $('body').append('<div id="scanningIndicator">Scanning every <br>' + settings.refreshInt + ' minutes</div>');
-        $('body').append('<div id="scanningIndicatorTimer"></div>');
 
-        startTime = (new Date()).getTime();
-        setInterval(function () {
-            var diffSeconds = ((new Date()).getTime() - startTime) / 1000;
-            var remaining = (settings.refreshInt * 60) - diffSeconds;
-            if (remaining < 0.1) {
-                $('#scanningIndicatorTimer').html('Refreshing...');
-            }
-            else {
-                $('#scanningIndicatorTimer').html('Next refresh in <br>' + formatFloat(remaining, 0) + ' sec');
-            }
-        }, 1000);
+            setTimeout(function () {
+                location.reload();
+            }, settings.refreshInt * 1000 * 60);
+
+            $('body').append('<div id="scanningIndicator">Scanning every <br>' + settings.refreshInt + ' minutes</div>');
+            $('body').append('<div id="scanningIndicatorTimer"></div>');
+
+            startTime = (new Date()).getTime();
+            setInterval(function () {
+                var diffSeconds = ((new Date()).getTime() - startTime) / 1000;
+                var remaining = (settings.refreshInt * 60) - diffSeconds;
+                if (remaining < 0.1) {
+                    $('#scanningIndicatorTimer').html('Refreshing...');
+                }
+                else {
+                    $('#scanningIndicatorTimer').html('Next refresh in <br>' + formatFloat(remaining, 0) + ' sec');
+                }
+            }, 1000);
+        }
+        else {
+            sessionStorage.removeItem('scanningActive');
+        }
 
     }
 
@@ -583,7 +592,9 @@ function checkBeforeMerge(newAdvert, oldAdvert, temp) {
 
 function sendNewAdvEmailNotification(newAdvert) {
     if (sessionStorage.getItem('scanningActive') != null && emailsSent > -1) {
-        newAdvert.thumbnail = $('li[data-options="{\\"hasCompare\\":true,\\"id\\":' + newAdvert.advertId + '}"] .entity-thumbnail a>img')[0].dataset.src.substring(2);
+        newAdvert.thumbnail = $('li[data-options="{\\"hasCompare\\":false,\\"id\\":' + newAdvert.advertId + '}"] .entity-thumbnail a>img').length == 0 ?
+            $('li[data-options="{\\"hasCompare\\":true,\\"id\\":' + newAdvert.advertId + '}"] .entity-thumbnail a>img')[0].dataset.src.substring(2) : 
+            $('li[data-options="{\\"hasCompare\\":false,\\"id\\":' + newAdvert.advertId + '}"] .entity-thumbnail a>img')[0].dataset.src.substring(2);
 
         var parts = newAdvert.title.split(';');
         var subject = "Novi oglas - " + parts[0] + ' ' + parts[1] + ' ' + parts[3] + ' (' + formatFloat (newAdvert.priceHRK, 0) + ' kn)';
@@ -600,14 +611,21 @@ function sendNewAdvEmailNotification(newAdvert) {
         body += "<a href=\"" + newAdvert.url + "\" target=\"_blank\" style=\"font-size:12pt;\">" + newAdvert.title + "</a>";
         body += "<br>";
         body += "<p style=\"color:black;\">" + newAdvert.mainDesc + "</p>";
-        body += "<b>";
-        body += formatFloat(newAdvert.priceHRK, 0) + " kn</b>";
-        body += "<b>";
-        body += formatFloat(newAdvert.priceEUR, 0) + " €</b>";
+        //body += "<b>";
+        body += "<b>" + formatFloat(newAdvert.priceHRK, 0) + " kn</b>";
+        body += "<br>";
+        body += "<b>" + formatFloat(newAdvert.priceEUR, 0) + " €</b>";
         //return;
 
         if (settings == null)
             settings = getSettings();
+
+        $('#emailjsUserId').prev().removeClass('invalidSetting');
+        $('#emailjsUserId').removeClass('invalidSetting');
+        $('#emailjsTemplateId').prev().removeClass('invalidSetting');
+        $('#emailjsTemplateId').removeClass('invalidSetting');
+        $('#njuskaloEmailForNewAdv').prev().removeClass('invalidSetting');
+        $('#njuskaloEmailForNewAdv').removeClass('invalidSetting');
 
         if (settings.email != null && settings.email.length > 0 &&
             settings.emailJsTemplateId != null && settings.emailJsTemplateId.length > 0 &&
@@ -621,7 +639,25 @@ function sendNewAdvEmailNotification(newAdvert) {
             emailsSent++;
         }
         else {
-            alert('Podaci za slanje email nedostaju');
+            validateEmailJsSettings();
+
+            //alert('Podaci za slanje email nedostaju');
+            //$('body .content-primary #settingsModal').addClass('show');
+
+            //if (settings.emailJsUserId == null || settings.emailJsUserId.length == 0) {
+            //    $('#emailjsUserId').prev().addClass('invalidSetting');
+            //    $('#emailjsUserId').addClass('invalidSetting');
+            //}
+
+            //if (settings.emailJsTemplateId == null || settings.emailJsTemplateId.length == 0) {
+            //    $('#emailjsTemplateId').prev().addClass('invalidSetting');
+            //    $('#emailjsTemplateId').addClass('invalidSetting');
+            //}
+
+            //if (settings.email == null || settings.email.length == 0) {
+            //    $('#njuskaloEmailForNewAdv').prev().addClass('invalidSetting');
+            //    $('#njuskaloEmailForNewAdv').addClass('invalidSetting');
+            //}
         }
     }
     else {
@@ -738,20 +774,70 @@ function sendWithElastic(subject, body, from, to) {
 
 function sendWithEmailJS(subject, body, to) {
 
-    var service_id = 'default_service';
-    var template_id = settings.emailJsTemplateId;
-    var template_params = {
-        subject: subject,
-        emailTo: to,
-        message: body
+    //var service_id = 'default_service';
+    //var template_id = settings.emailJsTemplateId;
+    //var template_params = {
+    //    subject: subject,
+    //    emailTo: to,
+    //    message: body
+    //};
+
+    var data = {
+        service_id: 'default_service',
+        template_id: settings.emailJsTemplateId,
+        user_id: settings.emailJsUserId,
+        template_params: {
+            subject: subject,
+            emailTo: to,
+            message: body
+        }
     };
 
     try {
-        emailjs.send(service_id, template_id, template_params);  
+        $.ajax('https://api.emailjs.com/api/v1.0/email/send', {
+            type: 'POST',
+            data: JSON.stringify(data),
+            contentType: 'application/json'
+        }).done(function () {
+            console.log('Your mail is sent! - ' + subject);
+        }).fail(function (error) {
+            alert('Slanje maila nije prošlo: ' + error.responseText);
+            console.log(error)
+        });
+        //emailjs.send(service_id, template_id, template_params);  
     }
     catch (ex) {
         alert('error sending email');
     }
+}
+
+function validateEmailJsSettings() {
+    var validForm = true;
+
+    if (settings.emailJsUserId == null || settings.emailJsUserId.length == 0) {
+        $('#emailjsUserId').prev().addClass('invalidSetting');
+        $('#emailjsUserId').addClass('invalidSetting');
+        validForm = false;
+    }
+
+    if (settings.emailJsTemplateId == null || settings.emailJsTemplateId.length == 0) {
+        $('#emailjsTemplateId').prev().addClass('invalidSetting');
+        $('#emailjsTemplateId').addClass('invalidSetting');
+        validForm = false;
+    }
+
+    if (settings.email == null || settings.email.length == 0) {
+        $('#njuskaloEmailForNewAdv').prev().addClass('invalidSetting');
+        $('#njuskaloEmailForNewAdv').addClass('invalidSetting');
+        validForm = false;
+    }
+
+    if (validForm == false) {
+        alert('Podaci za slanje email nedostaju');
+        $('body .content-primary #settingsModal').addClass('show');
+    }
+
+    return validForm;
 }
 
 function setLoadingDiv(element, itemId) {
@@ -887,12 +973,15 @@ function getAdditionalItemInfoCallback(response) {
             else if ($($(rows[j]).find('th'))[0].innerHTML == 'Naselje:') {
                 concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
             }
-            else if ($($(rows[j]).find('th'))[0].innerHTML == 'Tip stana:') {
+            else if ($($(rows[j]).find('th'))[0].innerHTML == 'Lokacija:') {
                 concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
             }
-            else if ($($(rows[j]).find('th'))[0].innerHTML == 'Tip kuće:') {
-                concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
-            }
+            //else if ($($(rows[j]).find('th'))[0].innerHTML == 'Tip stana:') {
+            //    concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
+            //}
+            //else if ($($(rows[j]).find('th'))[0].innerHTML == 'Tip kuće:') {
+            //    concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
+            //}
             else if ($($(rows[j]).find('th'))[0].innerHTML == 'Broj etaža:') {
                 sideDescItems.push('Broj etaža: ' + $($(rows[j]).find('td'))[0].innerText);
                 //concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
@@ -902,17 +991,17 @@ function getAdditionalItemInfoCallback(response) {
                 concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
             }
             else if ($($(rows[j]).find('th'))[0].innerHTML == 'Kat:') {
-                concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
+                concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML + '. kat';
             }
             else if ($($(rows[j]).find('th'))[0].innerHTML == 'Šifra objekta:') {
                 concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
             }
             else if ($($(rows[j]).find('th'))[0].innerHTML == 'Stambena površina:') {
-                concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
+                concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML + "m2";
             }
             else if ($($(rows[j]).find('th'))[0].innerHTML == 'Godina izgradnje:') {
                 sideDescItems.push('Godina izgradnje: ' + $($(rows[j]).find('td'))[0].innerText);
-                concatTitle += ';' + $($(rows[j]).find('td'))[0].innerText;
+                concatTitle += '; izgrađeno ' + $($(rows[j]).find('td'))[0].innerText;
             }
 
         }
