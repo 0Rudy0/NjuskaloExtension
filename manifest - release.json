@@ -3,7 +3,7 @@
 
     "name": "Njuskalo enhancer",
     "description": "Enhancing Njuskalo experience, price tracking.",
-    "version": "1.3.8",
+    "version": "1.4.0",
     "icons": {
         "16": "icons/njuskalo_16.png",
         "48": "icons/njuskalo_48.png",
@@ -37,28 +37,17 @@
             "https://www.njuskalo.hr/*&categoryId=12404&*",
             "https://www.njuskalo.hr/*"
           ],
-          "css": [
-            "css/imageSlider.css",
-            "css/imageSliderAlt.css",
-            "css/mergeModal.css",
-            "css/morris.css",
-            "css/Njuskalo.css",
-            "css/prettify.min.css",
-            "css/settingsModal.css"
-          ],
-          "js": [
-            "js/jquery.min.js",
-            "js/raphael-min.js",
-            "js/morris.min.js",
-            "js/prettify.min.js",
-            "js/csvExport.min.js",
-            "js/dbase.js",
-            "js/jssor.slider.min.js",
-            "js/imageSliderInit.js",
-            "js/email.min.js",
-            "js/NjuskaloAppending.js",
-            "js/Njuskalo.js"
-          ]
+            "css": [
+                "css/bundle.min.css"
+            ],
+            "js": [
+                "js/jquery.min.js",
+                "js/raphael-min.js",
+                "js/morris.min.js",
+                "js/prettify.min.js",
+                "js/csvExport.min.js",
+                "js/bundle.min.js"
+            ]
         }
     ],
     "web_accessible_resources": [

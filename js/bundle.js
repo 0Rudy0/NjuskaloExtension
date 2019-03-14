@@ -165,18 +165,37 @@ var dbase = (function () {
 	        callback(newAdvert); //send email of new advert
 			insertNewAdvert(advertId, priceHRK, priceEUR, title, mainDesc, username);
 			return;
-		}
+        }
+
+        var titleWithoutKm = title;
+        var km = 0;
+        if (title.indexOf('km') >= 0) {
+            titleWithoutKm = '';
+            var splitStr = title.split(';');
+            //kilometraža je zadnja u arrayu (ako postoji), izbaci ju
+            for (var i = 0; i < splitStr.length - 1; i++) {
+                titleWithoutKm += splitStr[i] + ";";
+            }
+            km = parseInt(splitStr[splitStr.length - 1].replace(',', ''));
+            titleWithoutKm = titleWithoutKm.substring(0, titleWithoutKm.length - 1); // remove last ';'
+        }
 
 		db.transaction(function (tx) {
-			tx.executeSql('SELECT * from Advert where title = ?', [title], function (tx, result) {
+            tx.executeSql('SELECT * from Advert where title LIKE ?', [titleWithoutKm + '%'], function (tx, result) {
 				if (result.rows.length > 0) {
 				    var withSameTitle = result.rows;
 				    var found = false;
 					for (var i = 0; i < withSameTitle.length; i++) {
 						var adv = withSameTitle[i];
 						if (adv.username == username) {
-						    found = true;
-						    //if (adv.username != username) {
+                            found = true;
+                            var km2 = 0;
+                            if (adv.title.indexOf('km') >= 0) {
+                                var splitStr2 = adv.title.split(';');
+                                //kilometraža je zadnja u arrayu (ako postoji)
+                                km2 = parseInt(splitStr2[splitStr2.length - 1].replace(',', ''));
+                            }
+
 						    var adverts = {
 						        newAdvert: {
 						            advertId: advertId,
@@ -197,9 +216,25 @@ var dbase = (function () {
 						            dateFirstViewed: new Date(adv.dateFirstViewed)
 						        },
 						        callback: callback
-						    }
-						    tx.executeSql('SELECT date, priceHRK, priceEUR FROM PriceHistory where advertId = ? ORDER BY date DESC', [adv.advertId], sendAdvertForCompare.bind(adverts));
-						    return;
+                            }
+
+                            if (km > 0 && km >= km2 * 0.98 && km <= km2 * 1.02) {
+                                //auto merge without modal
+                                mergeAdverts(adverts.oldAdvert.advertId, adverts.newAdvert.advertId, adverts.newAdvert.priceHRK, adverts.newAdvert.priceEUR, adverts.newAdvert.title, adverts.newAdvert.mainDesc, adverts.newAdvert.username);
+                                console.log('---------------------------------------------------------------------------------------------');
+                                console.log('auto merged adverts because fake new: ')
+                                console.log("OLD title: " + adverts.oldAdvert.title);
+                                console.log("NEW title: " + adverts.newAdvert.title);
+                                console.log("OLD description: " + adverts.oldAdvert.mainDesc);
+                                console.log("NEW description: " + adverts.newAdvert.mainDesc);
+                                console.log('---------------------------------------------------------------------------------------------');
+                                callback();
+                                return;
+                            }
+                            else {
+                                tx.executeSql('SELECT date, priceHRK, priceEUR FROM PriceHistory where advertId = ? ORDER BY date DESC', [adv.advertId], sendAdvertForCompare.bind(adverts));
+                                return;
+                            }
 						}
 					}
 					if (!found) {
@@ -257,8 +292,22 @@ var dbase = (function () {
 
 	var mergeAdverts = function (oldAdvertId, newAdvertId, priceHRK, priceEUR, title, mainDesc, username) {
 		db.transaction(function (tx) {
-		    tx.executeSql('UPDATE Advert set advertId = ? where advertId = ?', [newAdvertId, oldAdvertId], function (tx) { console.log('error updating advert'); });
-		    tx.executeSql('UPDATE PriceHistory set advertId = ? where advertId = ?', [newAdvertId, oldAdvertId], function (tx) { console.log('error updating price history'); });
+            tx.executeSql('UPDATE Advert set advertId = ? where advertId = ?', [newAdvertId, oldAdvertId],
+                function (tx) {
+                    console.log('success update advert');
+                },
+                function (tx) {
+                    console.log('error updating advert');
+                });
+
+            tx.executeSql('UPDATE PriceHistory set advertId = ? where advertId = ?', [newAdvertId, oldAdvertId],
+                function (tx) {
+                    console.log('success update price history');
+                },
+                function (tx) {
+                    console.log('error updating price history');
+                });
+
 			setTimeout(function () {
 				insertNewPrice(newAdvertId, priceHRK, priceEUR, title, mainDesc, username, null, null);
 			}, 500);
@@ -1213,7 +1262,7 @@ function setAdditionalInfo(that, isLast) {
 function checkBeforeMerge(newAdvert, oldAdvert, temp) {
     //console.log('check before merge ' + newAdvert.advertId);
     if (oldAdvert == null && newAdvert == null) {
-        //console.log(temp);
+        location.reload();
     }
     else if (oldAdvert == null && newAdvert != null) {
         //console.log('send new email ' + newAdvert.advertId);
@@ -1268,7 +1317,7 @@ function checkBeforeMerge(newAdvert, oldAdvert, temp) {
             var priceEur = formatFloat(newAdvert.priceEUR, 0) + ' €';
             $(mId + ' .rightContent ul.price-history-merge').html('<li>' + priceHrk + ' ; ' + priceEur + '</li>');
 
-            if (sessionStorage.getItem('autoPaging') == "true") {
+            if (sessionStorage.getItem('autoPaging') == "true" || sessionStorage.getItem('scanningActive') == "true") {
                 //console.log(actionOnDuplicate);
                 switch (actionOnDuplicate) {
                     case 'stop':
@@ -1330,7 +1379,13 @@ function checkBeforeMerge(newAdvert, oldAdvert, temp) {
 }
 
 function sendNewAdvEmailNotification(newAdvert) {
-    if (sessionStorage.getItem('scanningActive') != null && emailsSent > -1) {
+    var emailsSentForIds = sessionStorage.getItem("emailsSentForIds");
+    if (emailsSentForIds == null)
+        emailsSentForIds = [];
+    else
+        emailsSentForIds = JSON.parse(emailsSentForIds);
+
+    if (emailsSentForIds.indexOf(newAdvert.advertId) < 0 && sessionStorage.getItem('scanningActive') != null && emailsSent > -1) {
         newAdvert.thumbnail = $('li[data-options="{\\"hasCompare\\":false,\\"id\\":' + newAdvert.advertId + '}"] .entity-thumbnail a>img').length == 0 ?
             $('li[data-options="{\\"hasCompare\\":true,\\"id\\":' + newAdvert.advertId + '}"] .entity-thumbnail a>img')[0].dataset.src.substring(2) : 
             $('li[data-options="{\\"hasCompare\\":false,\\"id\\":' + newAdvert.advertId + '}"] .entity-thumbnail a>img')[0].dataset.src.substring(2);
@@ -1375,7 +1430,10 @@ function sendNewAdvEmailNotification(newAdvert) {
             //sendWithElastic(subject, body, 'postmaster@codius.co', settings.email)
             console.log('sending email...');
             sendWithEmailJS(subject, body, settings.email);
-            emailsSent++;
+            emailsSent++;            
+
+            emailsSentForIds.push(newAdvert.advertId);
+            sessionStorage.setItem("emailsSentForIds", JSON.stringify(emailsSentForIds));
         }
         else {
             validateEmailJsSettings();
@@ -1638,6 +1696,9 @@ function getAdditionalItemInfoCallback(response) {
     var rows = $(response).find('.table-summary tbody tr');
     var sideDescItems = [];
     var concatTitle = '';
+    var lokacija = '';
+    var kilometraža = '';
+
     for (var j = 0; j < rows.length; j++) {
         //OSOBNI AUTOMOBILI
         if ($('.breadcrumb-items li:nth-child(4) a.link').html().indexOf('Osobni automobili') > -1) {
@@ -1650,8 +1711,8 @@ function getAdditionalItemInfoCallback(response) {
             else if ($($(rows[j]).find('th'))[0].innerHTML == 'Tip automobila:') {
                 concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
             }
-            else if ($($(rows[j]).find('th'))[0].innerHTML == 'Godina modela:') {
-                concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
+            else if ($($(rows[j]).find('th'))[0].innerHTML == 'Godina proizvodnje:') {
+                concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML.replace('godište', '').trim();
             }
             else if ($($(rows[j]).find('th'))[0].innerHTML == 'Motor:') {
                 motor += $($(rows[j]).find('td'))[0].innerHTML + ' - ';
@@ -1669,6 +1730,12 @@ function getAdditionalItemInfoCallback(response) {
             }
             else if ($($(rows[j]).find('th'))[0].innerHTML == 'Vlasnik:') {
                 sideDescItems.push('Vlasnik: ' + $($(rows[j]).find('td'))[0].innerHTML);
+            }
+            else if ($($(rows[j]).find('th'))[0].innerHTML == 'Lokacija vozila:') {
+                lokacija = $($(rows[j]).find('td'))[0].innerHTML.trim();
+            }
+            else if ($($(rows[j]).find('th'))[0].innerHTML == 'Prijeđeni kilometri:') {
+                kilometraža = $($(rows[j]).find('td'))[0].innerText.trim();
             }
 
 
@@ -1799,6 +1866,12 @@ function getAdditionalItemInfoCallback(response) {
                 }
             }
         }
+
+        if (lokacija.length > 0)
+            concatTitle += ';' + lokacija;
+
+        if (kilometraža.length > 0)
+            concatTitle += ';' + kilometraža;
     }
 
     dbase.insertNewPrice(currID, prices.priceHRK, prices.priceEUR, concatTitle, mainDesc, username, this.url, checkBeforeMerge);
@@ -1886,10 +1959,12 @@ function embedPriceHistory(jQueryElement, priceHistory, itemId) {
         if ((new Date(priceHistory[i].date)).toLocaleDateString('hr') == (new Date()).toLocaleDateString('hr')) {
             $('#historyBtnList' + itemId).css('background-color', '#cc002c');
             $('#historyBtnList' + itemId).addClass('newPrice');
-            summary.newPrices.push(JSON.parse(jQueryElement.attr('data-options')).id);
-            //summary.newPrices2[JSON.parse(jQueryElement.attr('data-options')).id] = true;
-            summary.newPrices2[JSON.parse(jQueryElement.attr('data-options')).id] = jQueryElement[0].innerText;
-            //console.log("new price: " + JSON.parse(jQueryElement.attr('data-options')).id);
+            if (summary.newPrices.indexOf(JSON.parse(jQueryElement.attr('data-options')).id) < 0) {
+                summary.newPrices.push(JSON.parse(jQueryElement.attr('data-options')).id);
+                //summary.newPrices2[JSON.parse(jQueryElement.attr('data-options')).id] = true;
+                summary.newPrices2[JSON.parse(jQueryElement.attr('data-options')).id] = jQueryElement[0].innerText;
+                //console.log("new price: " + JSON.parse(jQueryElement.attr('data-options')).id);
+            }
         }
 
         if (i == priceHistory.length - 1) {

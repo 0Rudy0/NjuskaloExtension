@@ -71,18 +71,37 @@
 	        callback(newAdvert); //send email of new advert
 			insertNewAdvert(advertId, priceHRK, priceEUR, title, mainDesc, username);
 			return;
-		}
+        }
+
+        var titleWithoutKm = title;
+        var km = 0;
+        if (title.indexOf('km') >= 0) {
+            titleWithoutKm = '';
+            var splitStr = title.split(';');
+            //kilometraža je zadnja u arrayu (ako postoji), izbaci ju
+            for (var i = 0; i < splitStr.length - 1; i++) {
+                titleWithoutKm += splitStr[i] + ";";
+            }
+            km = parseInt(splitStr[splitStr.length - 1].replace(',', ''));
+            titleWithoutKm = titleWithoutKm.substring(0, titleWithoutKm.length - 1); // remove last ';'
+        }
 
 		db.transaction(function (tx) {
-			tx.executeSql('SELECT * from Advert where title = ?', [title], function (tx, result) {
+            tx.executeSql('SELECT * from Advert where title LIKE ?', [titleWithoutKm + '%'], function (tx, result) {
 				if (result.rows.length > 0) {
 				    var withSameTitle = result.rows;
 				    var found = false;
 					for (var i = 0; i < withSameTitle.length; i++) {
 						var adv = withSameTitle[i];
 						if (adv.username == username) {
-						    found = true;
-						    //if (adv.username != username) {
+                            found = true;
+                            var km2 = 0;
+                            if (adv.title.indexOf('km') >= 0) {
+                                var splitStr2 = adv.title.split(';');
+                                //kilometraža je zadnja u arrayu (ako postoji)
+                                km2 = parseInt(splitStr2[splitStr2.length - 1].replace(',', ''));
+                            }
+
 						    var adverts = {
 						        newAdvert: {
 						            advertId: advertId,
@@ -103,9 +122,25 @@
 						            dateFirstViewed: new Date(adv.dateFirstViewed)
 						        },
 						        callback: callback
-						    }
-						    tx.executeSql('SELECT date, priceHRK, priceEUR FROM PriceHistory where advertId = ? ORDER BY date DESC', [adv.advertId], sendAdvertForCompare.bind(adverts));
-						    return;
+                            }
+
+                            if (km > 0 && km >= km2 * 0.98 && km <= km2 * 1.02) {
+                                //auto merge without modal
+                                mergeAdverts(adverts.oldAdvert.advertId, adverts.newAdvert.advertId, adverts.newAdvert.priceHRK, adverts.newAdvert.priceEUR, adverts.newAdvert.title, adverts.newAdvert.mainDesc, adverts.newAdvert.username);
+                                console.log('---------------------------------------------------------------------------------------------');
+                                console.log('auto merged adverts because fake new: ')
+                                console.log("OLD title: " + adverts.oldAdvert.title);
+                                console.log("NEW title: " + adverts.newAdvert.title);
+                                console.log("OLD description: " + adverts.oldAdvert.mainDesc);
+                                console.log("NEW description: " + adverts.newAdvert.mainDesc);
+                                console.log('---------------------------------------------------------------------------------------------');
+                                callback();
+                                return;
+                            }
+                            else {
+                                tx.executeSql('SELECT date, priceHRK, priceEUR FROM PriceHistory where advertId = ? ORDER BY date DESC', [adv.advertId], sendAdvertForCompare.bind(adverts));
+                                return;
+                            }
 						}
 					}
 					if (!found) {
@@ -163,8 +198,22 @@
 
 	var mergeAdverts = function (oldAdvertId, newAdvertId, priceHRK, priceEUR, title, mainDesc, username) {
 		db.transaction(function (tx) {
-		    tx.executeSql('UPDATE Advert set advertId = ? where advertId = ?', [newAdvertId, oldAdvertId], function (tx) { console.log('error updating advert'); });
-		    tx.executeSql('UPDATE PriceHistory set advertId = ? where advertId = ?', [newAdvertId, oldAdvertId], function (tx) { console.log('error updating price history'); });
+            tx.executeSql('UPDATE Advert set advertId = ? where advertId = ?', [newAdvertId, oldAdvertId],
+                function (tx) {
+                    console.log('success update advert');
+                },
+                function (tx) {
+                    console.log('error updating advert');
+                });
+
+            tx.executeSql('UPDATE PriceHistory set advertId = ? where advertId = ?', [newAdvertId, oldAdvertId],
+                function (tx) {
+                    console.log('success update price history');
+                },
+                function (tx) {
+                    console.log('error updating price history');
+                });
+
 			setTimeout(function () {
 				insertNewPrice(newAdvertId, priceHRK, priceEUR, title, mainDesc, username, null, null);
 			}, 500);
