@@ -20,7 +20,7 @@
 		        else {
 		            newPriceStack.push(advertId);
 		            //console.log('insert new price ' + newPriceStack.length);
-					updateAdvertData(tx, advertId, title, mainDesc, username);
+					updateAdvertData(tx, advertId, title, mainDesc, username);//fds
 					//updateTitle(tx, advertId, title);
 					//updateMainDesc(tx, advertId, mainDesc);
 					tx.executeSql('SELECT date, priceHRK, priceEUR FROM PriceHistory where advertId = ? ORDER BY date DESC', [advertId], function (tx, historyResults) {
@@ -33,8 +33,9 @@
 							var foundSamePrice = false;
 							var lastDate = historyResults.rows[0].date;
 							for (var i = 0; i < historyResults.rows.length; i++) {
-							    if (historyResults.rows[i].date == lastDate &&
-                                    ((historyResults.rows[i].priceHRK == priceHRK && priceEUR == 0) || (priceEUR > 0 && historyResults.rows[i].priceEUR == priceEUR))) {
+							    var row = historyResults.rows[i];
+							    if (row.date == lastDate &&
+                                    row.priceHRK == priceHRK && (priceEUR == 0 || row.priceEUR == 0 || (priceEUR > 0 && row.priceEUR == priceEUR))) {
 									foundSamePrice = true;
 									break;
 								}
