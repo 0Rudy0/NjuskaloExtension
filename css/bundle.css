@@ -528,15 +528,15 @@
 
 .BannerAboveHeader,
 .BannerWallpaper,
-.BannerWrapContent ,
-.content-aside,
+.BannerWrapContent,
+.wrap-content.ContentLayout > .content-aside,
 #adsense_adlist_bottom,
 #adsense_adlist_bottom_camao,
 #adsense_adlist_top_camao,
 #adsense_adlist_top,
 .EntityList--FeaturedStore,
-#comm100-container  {
-	display: none !important;
+#comm100-container {
+    display: none !important;
 }
 
 #priceListTable {
@@ -644,14 +644,14 @@
 
 #priceHistoryDiv {
 	width: 100%;
-	height: 200px;
+	height: 202px;
 	margin-top: 10px;
 	margin-bottom: 10px;
 }
 
-.content-primary {
-	margin-left: 0 !important;
-	padding-left: 0 !important;
+.wrap-content.ContentLayout > .content-primary {
+    margin-left: 0 !important;
+    padding-left: 0 !important;
 }
 
 /*div.entity-thumbnail a {
@@ -663,7 +663,7 @@ div.entity-thumbnail a img {
 }*/
 
 .base-entity-meta {
-	height: 315px;
+	height: 380px;
 }
 
 .block-standard.EntityListBlock,

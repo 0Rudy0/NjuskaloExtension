@@ -1720,7 +1720,8 @@ function getAdditionalItemInfoCallback(response) {
 
     }
 
-    if ($(response).find('.Profile-wrapUsername>a.link')[0].innerHTML.trim() == 'Posjetite ovu Njuškalo trgovinu') {
+    if (($(response).find('.Profile-wrapUsername>a.link')[0] && $(response).find('.Profile-wrapUsername>a.link')[0].innerHTML.trim() == 'Posjetite ovu Njuškalo trgovinu') ||
+        ($(response).find('.ClassifiedDetailOwnerDetails-linkAllAds')[0] && $(response).find('.ClassifiedDetailOwnerDetails-linkAllAds')[0].innerHTML.trim() == 'Svi oglasi ove trgovine')) {
         sideDescItems.push('Njuskalo trgovina');
     }
     else {
@@ -2102,9 +2103,17 @@ function orderSummary() {
 function order(array, object) {
     var listToOrder = []
     for (var i = 0; i < array.length; i++) {
-        var position = $('li[data-options="{\"hasCompare\":true,\"id\":' + array[i] + '}"]').length == 0 ?
-            $('li[data-options="{\"hasCompare\":false,\"id\":' + array[i] + '}"]').offset().top :
-            $('li[data-options="{\"hasCompare\":true,\"id\":' + array[i] + '}"]').offset().top;
+        var position =
+            $('li[data-options="{\"hasCompare\":true,"isAdInSavedList":false,\"id\":' + array[i] + '}"]').length == 0 ?
+                $('li[data-options="{\"hasCompare\":true,"isAdInSavedList":true,\"id\":' + array[i] + '}"]').length == 0 ?
+                    $('li[data-options="{\"hasCompare\":false,"isAdInSavedList":false,\"id\":' + array[i] + '}"]').length == 0 ?
+                        $('li[data-options="{\"hasCompare\":false,"isAdInSavedList":true,\"id\":' + array[i] + '}"]').offset().top
+                    :
+                    $('li[data-options="{\"hasCompare\":false,"isAdInSavedList":false,\"id\":' + array[i] + '}"]').offset().top
+                :
+                $('li[data-options="{\"hasCompare\":true,"isAdInSavedList":true,\"id\":' + array[i] + '}"]').offset().top
+            :
+            $('li[data-options="{\"hasCompare\":true,"isAdInSavedList":false,\"id\":' + array[i] + '}"]').offset().top;
 
         listToOrder.push({
             object: object[array[i]],
@@ -2172,10 +2181,18 @@ function cssElement(url) {
 }
 
 function getPrices(element) {
-    var priceHRK = $(element).find('.price.price--hrk')[0].innerText.replace(' kn', '').trim();
+    var priceHRK = 0;
+    if ($(element).find('.price.price--hrk').length > 0) 
+        priceHRK = $(element).find('.price.price--hrk')[0].innerText.replace('kn', '').trim();
+    else
+        priceHRK = $(element).find('.ClassifiedDetailSummary-priceDomestic')[0].innerText.replace('kn', '').trim();
+
     var priceEUR = 0;
-    if ($(element).find('.price.price--eur').length > 0)
-        priceEUR = $(element).find('.price.price--eur')[0].innerText.replace(' € ~', '').trim();
+    if ($(element).find('.ClassifiedDetailSummary-priceForeign').length > 0)
+        priceEUR = $(element).find('.ClassifiedDetailSummary-priceForeign')[0].innerText.replace('€ ~', '').trim();
+    else
+        priceEUR = $(element).find('.price.price--eur')[0].innerText.replace('€ ~', '').trim();
+
     while (priceHRK.indexOf('.') > -1) {
         priceHRK = priceHRK.replace('.', '');
     }
@@ -2285,10 +2302,18 @@ function onGetHistory(tx, results) {
         //details
         var priceHistory = results.rows;
         if (results.length > 1) {
-            jQuery('<div/>', {
-                id: 'priceHistoryDiv',
-                class: 'price-history',
-            }).appendTo($('.base-entity-meta'));
+            if ($('.base-entity-meta').length > 0) {
+                jQuery('<div/>', {
+                    id: 'priceHistoryDiv',
+                    class: 'price-history',
+                }).appendTo($('.base-entity-meta'));
+            }
+            else {
+                jQuery('<div/>', {
+                    id: 'priceHistoryDiv',
+                    class: 'price-history',
+                }).appendTo($('.breadcrumbs.breadcrumbs--alpha'));
+            }
 
             jQuery('<div/>', {
                 id: 'priceHistoryText',
@@ -2305,14 +2330,24 @@ function onGetHistory(tx, results) {
 }
 
 function onAddItemClick() {
-    if ($('li[data-options="{\"hasCompare\":true,\"id\":' + this + '}"]').length == 0) {
+    if ($('li[data-options="{\"hasCompare\":true,"isAdInSavedList":false,\"id\":' + this + '}"]').length > 0) {
         $('html, body').animate({
-            scrollTop: $('li[data-options="{\"hasCompare\":false,\"id\":' + this + '}"]').offset().top
+            scrollTop: $('li[data-options="{\"hasCompare\":true,"isAdInSavedList":false,\"id\":' + this + '}"]').offset().top
         }, 50);
     }
-    else {
+    else if ($('li[data-options="{\"hasCompare\":true,"isAdInSavedList":true,\"id\":' + this + '}"]').length > 0) {
         $('html, body').animate({
-            scrollTop: $('li[data-options="{\"hasCompare\":true,\"id\":' + this + '}"]').offset().top
+            scrollTop: $('li[data-options="{\"hasCompare\":true,"isAdInSavedList":true,\"id\":' + this + '}"]').offset().top
+        }, 50);
+    }
+    else if ($('li[data-options="{\"hasCompare\":false,"isAdInSavedList":false,\"id\":' + this + '}"]').length > 0) {
+        $('html, body').animate({
+            scrollTop: $('li[data-options="{\"hasCompare\":false,"isAdInSavedList":false,\"id\":' + this + '}"]').offset().top
+        }, 50);
+    }
+    else if ($('li[data-options="{\"hasCompare\":false,"isAdInSavedList":true,\"id\":' + this + '}"]').length > 0) {
+        $('html, body').animate({
+            scrollTop: $('li[data-options="{\"hasCompare\":false,"isAdInSavedList":true,\"id\":' + this + '}"]').offset().top
         }, 50);
     }
 }
