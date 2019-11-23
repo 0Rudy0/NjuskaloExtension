@@ -19,6 +19,8 @@ var activeOn = [
 ]
 
 var allImages = {};
+var allDescs = {};
+var slimDescs = {};
 var emailsSent = 0;
 
 var messages = {
@@ -230,7 +232,10 @@ chrome.runtime.onMessage.addListener(
         addRemoveButtons();
         $('.EntityList-item .entity-thumbnail a').click(function (e) {
             e.preventDefault();
-            var imgs = allImages[this.href.substring(this.href.lastIndexOf('-') + 1)];
+            var advertId = this.href.substring(this.href.lastIndexOf('-') + 1)
+            var imgs = allImages[advertId];
+            var desc = '<h2>Opis oglasa</h2><br>' + allDescs[advertId]
+            var isSlimDesc = slimDescs[advertId];
 
             $.get(chrome.extension.getURL('html/modalImages.html'))
 				.done(function (data) {
@@ -265,7 +270,17 @@ chrome.runtime.onMessage.addListener(
 							    $("#overlay").remove();
 							});
 				    })
-				    $JssorSlider$("jssor_1", jssor_1_options);
+                    $JssorSlider$("jssor_1", jssor_1_options);
+                    
+                    $('#jssor_1 .description').html(desc);
+
+                    $('#jssor_1').removeClass('slimDesc');
+                    $('#jssor_1').removeClass('fullDesc');
+
+                    if (isSlimDesc)
+                        $('#jssor_1').addClass('slimDesc');
+                    else
+                        $('#jssor_1').addClass('fullDesc');
 				    //setTimeout(function () {
 				    //}, 100);
 				});
@@ -306,18 +321,34 @@ function scrollonImageClick() {
 }
 
 function formatMileageAddHP(that) {
-    var rows = $('.table-summary tbody tr');
+    //var rows = $('.table-summary tbody tr');
+    var dts = $('.BlockStandard.ClassifiedDetailBasicDetails .ClassifiedDetailBasicDetails-list dt');
+    var dds = $('.BlockStandard.ClassifiedDetailBasicDetails .ClassifiedDetailBasicDetails-list dd');
     var mileage = 0;
-    for (var j = 0; j < rows.length; j++) {
-        if ($($(rows[j]).find('th'))[0].innerHTML == 'Prijeđeni kilometri:') {
-            mileage = parseInt($($(rows[j]).find('td'))[0].innerHTML.replace('<abbr title="kilometri">km</abbr>', ''));
-            $($(rows[j]).find('td'))[0].innerHTML = $($(rows[j]).find('td'))[0].innerHTML.replace(mileage, formatFloat(mileage, 0));
+    for (var j = 0; j < dts.length; j++) {
+        var dt = dts[j];
+        var dd = dds[j];
+
+        if (dt.innerText.indexOf('Prijeđeni kilometri') >= 0) {
+            mileage = parseInt(dd.innerText.trim().replace('km', ''));
+            dd.innerHTML = dd.innerHTML.replace(mileage, formatFloat(mileage, 0));
         }
-        else if ($($(rows[j]).find('th'))[0].innerHTML == 'Snaga motora:') {
-            var power = parseInt($($(rows[j]).find('td'))[0].innerHTML.replace('<abbr title="kilovati">kWh</abbr>', ''));
-            $($(rows[j]).find('td'))[0].innerHTML = $($(rows[j]).find('td'))[0].innerHTML = power + ' <abbr title="kilovati">kWh</abbr> (' + Math.ceil(power * 1.3428) + ' hp)';
+        else if (dt.innerText.indexOf('Snaga motora') >= 0) {
+            var toHorsePower = dd.innerText.trim().replace('kW', '') * 1.3428;
+            dd.innerHTML += '<span style="margin-left: 5px;">(' + Math.ceil(toHorsePower)  + ' HP)</span>';
+            //concatTitle += ';' + dd.innerText.trim();
         }
     }
+    //for (var j = 0; j < rows.length; j++) {
+    //    if ($($(rows[j]).find('th'))[0].innerHTML == 'Prijeđeni kilometri:') {
+    //        mileage = parseInt($($(rows[j]).find('td'))[0].innerHTML.replace('<abbr title="kilometri">km</abbr>', ''));
+    //        $($(rows[j]).find('td'))[0].innerHTML = $($(rows[j]).find('td'))[0].innerHTML.replace(mileage, formatFloat(mileage, 0));
+    //    }
+    //    else if ($($(rows[j]).find('th'))[0].innerHTML == 'Snaga motora:') {
+    //        var power = parseInt($($(rows[j]).find('td'))[0].innerHTML.replace('<abbr title="kilovati">kWh</abbr>', ''));
+    //        $($(rows[j]).find('td'))[0].innerHTML = $($(rows[j]).find('td'))[0].innerHTML = power + ' <abbr title="kilovati">kWh</abbr> (' + Math.ceil(power * 1.3428) + ' hp)';
+    //    }
+    //}
 }
 
 function insertPriceHistoryText(priceHistory) {
@@ -898,63 +929,78 @@ function formatMileageList(that) {
 function getAdditionalItemInfoCallback(response) {
     this.find('.loadingDiv').hide();
     var images = getImages(response);
+    var advertId = JSON.parse(this[0].attributes["data-options"].value).id;
 
-    allImages[JSON.parse(this[0].attributes["data-options"].value).id] = images;
+    allImages[advertId] = images;
 
     var username = $(response).find('.Profile-wrapUsername a').attr('href');
     //return;
     var kilometri = "Prijeđeni kilometri: ";
     var motor = 'Motor: ';
     var rows = $(response).find('.table-summary tbody tr');
+    var dts = $(response).find('.BlockStandard.ClassifiedDetailBasicDetails .ClassifiedDetailBasicDetails-list dt');
+    var dds = $(response).find('.BlockStandard.ClassifiedDetailBasicDetails .ClassifiedDetailBasicDetails-list dd');
     var sideDescItems = [];
     var concatTitle = '';
     var lokacija = '';
     var kilometraža = '';
+    var desc = '';
 
-    for (var j = 0; j < rows.length; j++) {
+    try {
+        desc = $(response).find('.ClassifiedDetailDescription-text').length > 0 ? $(response).find('.ClassifiedDetailDescription-text')[0].innerHTML.trim() : '';
+        slimDescs[advertId] = !desc;
+        if (!desc)
+            desc = $(response).find('.BlockStandard.ClassifiedDetailHighlightedAttributes.cf')[0].innerHTML;
+        allDescs[advertId] = desc;
+    }
+    catch(ex){ };
+
+    if ($('.breadcrumb-items li:nth-child(4) a.link').html().indexOf('Osobni automobili') > -1) {
+        
+
         //OSOBNI AUTOMOBILI
-        if ($('.breadcrumb-items li:nth-child(4) a.link').html().indexOf('Osobni automobili') > -1) {
-            if ($($(rows[j]).find('th'))[0].innerHTML == 'Marka automobila:') {
-                concatTitle += $($(rows[j]).find('td'))[0].innerHTML;
+        for (var j = 0; j < dts.length; j++) {
+            var dt = dts[j];
+            var dd = dds[j];
+            if (dt.innerText.indexOf('Marka automobila') >= 0) {
+                concatTitle += dd.innerText.trim();
             }
-            else if ($($(rows[j]).find('th'))[0].innerHTML == 'Model automobila:') {
-                concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
+            else if (dt.innerText.indexOf('Model automobila') >= 0) {
+                concatTitle += ';' + dd.innerText.trim();
             }
-            else if ($($(rows[j]).find('th'))[0].innerHTML == 'Tip automobila:') {
-                concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
+            else if (dt.innerText.indexOf('Tip automobila') >= 0) {
+                concatTitle += ';' + dd.innerText.trim();
             }
-            else if ($($(rows[j]).find('th'))[0].innerHTML == 'Godina proizvodnje:') {
-                concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML.replace('godište', '').trim();
+            else if (dt.innerText.indexOf('Godina proizvodnje') >= 0) {
+                concatTitle += ';' + dd.innerText.replace('godište', '').trim();
             }
-            else if ($($(rows[j]).find('th'))[0].innerHTML == 'Motor:') {
-                motor += $($(rows[j]).find('td'))[0].innerHTML + ' - ';
-                concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
+            else if (dt.innerText.indexOf('Motor') >= 0) {
+                motor += dd.innerText.trim() + ' - ';
+                concatTitle += ';' + dd.innerText.trim();
             }
-            else if ($($(rows[j]).find('th'))[0].innerHTML == 'Snaga motora:') {
-                motor += $($(rows[j]).find('td'))[0].innerHTML.replace(' <abbr title="kilovati">kW</abbr>', ' kWh');
-                var toHorsePower = parseInt($($(rows[j]).find('td'))[0].innerHTML.replace(' <abbr title="kilovati">kW</abbr>', '')) * 1.3428;
+            else if (dt.innerText.indexOf('Snaga motora') >= 0) {
+                motor += dd.innerText.trim();
+                var toHorsePower = dd.innerText.trim().replace('kW', '') * 1.3428;
                 sideDescItems.push(motor + ' (' + Math.ceil(toHorsePower) + ' hp)');
-
-                concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML.replace(' <abbr title="kilovati">kW</abbr>', 'kWh');
+                concatTitle += ';' + dd.innerText.trim();
             }
-            else if ($($(rows[j]).find('th'))[0].innerHTML == 'Mjenjač:') {
-                sideDescItems.push('Mjenjač: ' + $($(rows[j]).find('td'))[0].innerHTML);
+            else if (dt.innerText.indexOf('Mjenjač') >= 0) {
+                sideDescItems.push('Mjenjač: ' + dd.innerText.trim());
             }
-            else if ($($(rows[j]).find('th'))[0].innerHTML == 'Vlasnik:') {
-                sideDescItems.push('Vlasnik: ' + $($(rows[j]).find('td'))[0].innerHTML);
+            else if (dt.innerText.indexOf('Vlasnik') >= 0) {
+                sideDescItems.push('Vlasnik: ' + dd.innerText.trim());
             }
-            else if ($($(rows[j]).find('th'))[0].innerHTML == 'Lokacija vozila:') {
-                lokacija = $($(rows[j]).find('td'))[0].innerHTML.trim();
+            else if (dt.innerText.indexOf('Lokacija vozila') >= 0) {
+                lokacija = dd.innerText.trim();
             }
-            else if ($($(rows[j]).find('th'))[0].innerHTML == 'Prijeđeni kilometri:') {
-                kilometraža = $($(rows[j]).find('td'))[0].innerText.trim();
+            else if (dt.innerText.indexOf('Prijeđeni kilometri') >= 0) {
+                kilometraža = dd.innerText.trim();
             }
-
-
         }
-
-            //MOTORI
-        else if ($('.breadcrumb-items li:nth-child(4) a.link').html().indexOf('Motocikli / Motori') > -1) {
+    }
+    else if ($('.breadcrumb-items li:nth-child(4) a.link').html().indexOf('Motocikli / Motori') > -1) {
+        //MOTORI
+        for (var j = 0; j < rows.length; j++) {
             if ($($(rows[j]).find('th'))[0].innerHTML == 'Marka:') {
                 concatTitle += $($(rows[j]).find('td'))[0].innerHTML;
             }
@@ -979,52 +1025,87 @@ function getAdditionalItemInfoCallback(response) {
                 concatTitle += ';' + $($(rows[j]).find('td time'))[0].innerHTML;
             }
         }
-
-            //STAMBENO
-        else if ($('.breadcrumb-items li:nth-child(3) a.link').html().indexOf('Nekretnine') > -1) {
-            //if ($($(rows[j]).find('th'))[0].innerHTML == 'Županija:') {
-            //	concatTitle += $($(rows[j]).find('td'))[0].innerHTML;
-            //}
-            if ($($(rows[j]).find('th'))[0].innerHTML == 'Grad/Općina:') {
-                concatTitle += $($(rows[j]).find('td'))[0].innerHTML;
-            }
-            else if ($($(rows[j]).find('th'))[0].innerHTML == 'Naselje:') {
-                concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
-            }
-            else if ($($(rows[j]).find('th'))[0].innerHTML == 'Lokacija:') {
-                concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
-            }
-            //else if ($($(rows[j]).find('th'))[0].innerHTML == 'Tip stana:') {
-            //    concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
-            //}
-            //else if ($($(rows[j]).find('th'))[0].innerHTML == 'Tip kuće:') {
-            //    concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
-            //}
-            else if ($($(rows[j]).find('th'))[0].innerHTML == 'Broj etaža:') {
-                sideDescItems.push('Broj etaža: ' + $($(rows[j]).find('td'))[0].innerText);
-                //concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
-            }
-            else if ($($(rows[j]).find('th'))[0].innerHTML == 'Broj soba:') {
-                sideDescItems.push('Broj soba: ' + $($(rows[j]).find('td'))[0].innerText);
-                concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
-            }
-            else if ($($(rows[j]).find('th'))[0].innerHTML == 'Kat:') {
-                concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML + '. kat';
-            }
-            else if ($($(rows[j]).find('th'))[0].innerHTML == 'Šifra objekta:') {
-                concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
-            }
-            else if ($($(rows[j]).find('th'))[0].innerHTML == 'Stambena površina:') {
-                concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML + "m2";
-            }
-            else if ($($(rows[j]).find('th'))[0].innerHTML == 'Godina izgradnje:') {
-                sideDescItems.push('Godina izgradnje: ' + $($(rows[j]).find('td'))[0].innerText);
-                concatTitle += '; izgrađeno ' + $($(rows[j]).find('td'))[0].innerText;
-            }
-
-        }
-
     }
+    else if ($('.breadcrumb-items li:nth-child(3) a.link').html().indexOf('Nekretnine') > -1) {     
+
+        for (var j = 0; j < dts.length; j++) {
+            var dt = dts[j];
+            var dd = dds[j];
+
+            if (dt.innerText.indexOf('Grad/Općina') >= 0) {
+                concatTitle += dd.innerText.trim();
+            }
+            else if (dt.innerText.indexOf('Naselje') >= 0) {
+                concatTitle += ';' + dd.innerText.trim();
+            }
+            else if (dt.innerText.indexOf('Lokacija') >= 0) {
+                concatTitle += ';' + dd.innerText.trim();
+            }
+            else if (dt.innerText.indexOf('Broj etaža') >= 0) {
+                sideDescItems.push(dd.innerText.trim());
+            }
+            else if (dt.innerText.indexOf('Broj soba') >= 0) {
+                sideDescItems.push(dd.innerText.trim());
+                concatTitle += ';' + dd.innerText.trim();
+            }
+            else if (dt.innerText.indexOf('Kat') >= 0) {
+                concatTitle += ';' + dd.innerText.trim() + '. kat';
+            }
+            else if (dt.innerText.indexOf('Šifra objekta') >= 0) {
+                concatTitle += ';' + dd.innerText.trim();
+            }
+            else if (dt.innerText.indexOf('Stambena površina') >= 0) {
+                concatTitle += ';' + dd.innerText.trim() + 'm2';
+            }
+            else if (dt.innerText.indexOf('Godina izgradnje') >= 0) {
+                sideDescItems.push('Godina izgradnje: ' + dd.innerText.trim());
+                concatTitle += '; izgrađeno '+ dd.innerText.trim();
+            }
+        }
+        //for (var j = 0; j < rows.length; j++) {
+        //    //if ($($(rows[j]).find('th'))[0].innerHTML == 'Županija:') {
+        //    //	concatTitle += $($(rows[j]).find('td'))[0].innerHTML;
+        //    //}
+        //    if ($($(rows[j]).find('th'))[0].innerHTML == 'Grad/Općina:') {
+        //        concatTitle += $($(rows[j]).find('td'))[0].innerHTML;
+        //    }
+        //    else if ($($(rows[j]).find('th'))[0].innerHTML == 'Naselje:') {
+        //        concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
+        //    }
+        //    else if ($($(rows[j]).find('th'))[0].innerHTML == 'Lokacija:') {
+        //        concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
+        //    }
+        //    //else if ($($(rows[j]).find('th'))[0].innerHTML == 'Tip stana:') {
+        //    //    concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
+        //    //}
+        //    //else if ($($(rows[j]).find('th'))[0].innerHTML == 'Tip kuće:') {
+        //    //    concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
+        //    //}
+        //    else if ($($(rows[j]).find('th'))[0].innerHTML == 'Broj etaža:') {
+        //        sideDescItems.push('Broj etaža: ' + $($(rows[j]).find('td'))[0].innerText);
+        //        //concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
+        //    }
+        //    else if ($($(rows[j]).find('th'))[0].innerHTML == 'Broj soba:') {
+        //        sideDescItems.push('Broj soba: ' + $($(rows[j]).find('td'))[0].innerText);
+        //        concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
+        //    }
+        //    else if ($($(rows[j]).find('th'))[0].innerHTML == 'Kat:') {
+        //        concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML + '. kat';
+        //    }
+        //    else if ($($(rows[j]).find('th'))[0].innerHTML == 'Šifra objekta:') {
+        //        concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML;
+        //    }
+        //    else if ($($(rows[j]).find('th'))[0].innerHTML == 'Stambena površina:') {
+        //        concatTitle += ';' + $($(rows[j]).find('td'))[0].innerHTML + "m2";
+        //    }
+        //    else if ($($(rows[j]).find('th'))[0].innerHTML == 'Godina izgradnje:') {
+        //        sideDescItems.push('Godina izgradnje: ' + $($(rows[j]).find('td'))[0].innerText);
+        //        concatTitle += '; izgrađeno ' + $($(rows[j]).find('td'))[0].innerText;
+        //    }
+        //}
+    }
+
+    
 
     if (($(response).find('.Profile-wrapUsername>a.link')[0] && $(response).find('.Profile-wrapUsername>a.link')[0].innerHTML.trim() == 'Posjetite ovu Njuškalo trgovinu') ||
         ($(response).find('.ClassifiedDetailOwnerDetails-linkAllAds')[0] && $(response).find('.ClassifiedDetailOwnerDetails-linkAllAds')[0].innerHTML.trim() == 'Svi oglasi ove trgovine')) {
@@ -1368,24 +1449,37 @@ function addRemoveButtons() {
 }
 
 function getImages(response) {
-    var index = $($(response).find('.BaseEntityThumbnails--multimedia.Gallery-thumbnails')).length - 1;
-    var items = $($(response).find('.BaseEntityThumbnails--multimedia.Gallery-thumbnails')[index]).find('li.BaseEntityThumbnails-item a.BaseEntityThumbnails-link');
     var largeImages = [];
     var thumbs = [];
 
-    for (var i = 0; i < items.length; i++) {
-        largeImages.push($(items[i])[0].href);
-        if ($($(items[i])).find('img')[0]) {
-            thumbs.push($($(items[i])).find('img')[0].src);
-        }
-        else {
-            thumbs.push($(items[i])[0].href);
+    var index = $($(response).find('.BaseEntityThumbnails--multimedia.Gallery-thumbnails')).length - 1;
+    if (index >= 0) {
+
+        for (var i = 0; i < items.length; i++) {
+            largeImages.push($(items[i])[0].href);
+            if ($($(items[i])).find('img')[0]) {
+                thumbs.push($($(items[i])).find('img')[0].src);
+            }
+            else {
+                thumbs.push($(items[i])[0].href);
+            }
         }
     }
+    else {
+        var items = $(response).find('.ClassifiedDetailGallery-thumbsList .ClassifiedDetailGallery-thumbsItem img')
+        for (var i = 0; i < items.length; i++) {
+            var thumb = $(items[i]).attr('data-src');
+            var largeImg = thumb.replace('image-80x60', 'image-w920x690');
+            largeImages.push(largeImg);
+            thumbs.push(thumb);
+        }
+    }
+
     return {
         imgs: largeImages,
         thumbs: thumbs
     }
+    
     //console.log(items);
 }
 
@@ -1491,13 +1585,18 @@ function getPrices(element) {
     if ($(element).find('.price.price--hrk').length > 0) 
         priceHRK = $(element).find('.price.price--hrk')[0].innerText.replace('kn', '').trim();
     else
-        priceHRK = $(element).find('.ClassifiedDetailSummary-priceDomestic')[0].innerText.replace('kn', '').trim();
+        priceHRK = $(element).find('.ClassifiedDetailSummary-priceDomestic').text().replace($(element).find('.ClassifiedDetailSummary-priceForeign').text(), '').replace('kn', '').trim();
 
     var priceEUR = 0;
-    if ($(element).find('.ClassifiedDetailSummary-priceForeign').length > 0)
-        priceEUR = $(element).find('.ClassifiedDetailSummary-priceForeign')[0].innerText.replace('€ ~', '').trim();
-    else
-        priceEUR = $(element).find('.price.price--eur')[0].innerText.replace('€ ~', '').trim();
+    try {
+        if ($(element).find('.ClassifiedDetailSummary-priceForeign').length > 0)
+            priceEUR = $(element).find('.ClassifiedDetailSummary-priceForeign').text().replace('~', '').replace('€', '').trim()
+        else
+            priceEUR = $(element).find('.price.price--eur')[0].innerText.replace('€ ~', '').trim();
+    }
+    catch(ex){
+        //price EUR 0 ako ne uspije parsiranje
+    };
 
     while (priceHRK.indexOf('.') > -1) {
         priceHRK = priceHRK.replace('.', '');
