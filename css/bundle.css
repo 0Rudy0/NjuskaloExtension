@@ -1,108 +1,3 @@
-#settingsModal {
-    /*position: fixed;*/
-    /*width: 200px;*/
-    /*height: 500px;*/
-    background-color: #fdcd00;
-    margin-bottom: 10px;
-    border: 1px solid white;
-    /*transition-duration: 0.5s;*/
-    /*transform: scaleX(0);*/
-    border-radius: 4px;
-    /*display: none;*/
-    height: 0;
-    overflow: hidden;
-    transition-property: height;
-    transition-duration: 0.5s;
-    position: relative;
-}
-
-#settingsModal.show {
-    display: block;
-    /*border: 1px solid white;*/
-    border: 1px solid #d0d0ce;
-    height: 305px;
-    /*transform: scaleX(1);*/
-}
-
-#settingsModal .block-standard-title {
-    background-color: black;
-    color: #d0d0ce;
-    font-weight: normal;
-    border: none !important;
-    text-shadow: none;
-    text-transform: none;
-}
-
-#settingsModal.form-standard .form-item {
-    border-top: 1px solid white !important;
-}
-
-/*.UserNav .link:focus {
-    background-color: transparent !important;
-    color: white !important;
-}*/
-
-/*.UserNav .link:active,
-.UserNav .link:focus {
-    background-color: #d6af00 !important;
-    color: black !important;
-}*/
-
-#settingsModal .form-grid {
-    float: left;
-    width: 50%;
-}
-
-#settingsModal .form-grid.fullW {
-    width: 100%;
-}
-
-#settingsModal .button-standard.active {
-    background-color: #147aa1 !important;
-    background-image: none !important;
-}
-
-#emailSetupTutorial {
-    position: fixed;
-    width: 500px;
-    height: 350px;
-    background-color: white;
-    border: 2px solid black;
-    padding: 20px;
-    left: calc(50% - 250px);
-    top: calc(50% - 175px);
-    transition-duration: 0.6s;
-    transform: scale(0);
-    opacity: 0.1;
-}
-
-#emailSetupTutorial.showing {
-    transform: scale(1);
-    opacity: 1;
-}
-
-#emailSetupTutorial .closeBtn {
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    background-color: black;
-    width: 20px;
-    height: 20px;
-    cursor: pointer;
-    color: white;
-    padding: 2px 0 0 6px;
-}
-
-#emailSetupTutorial .closeBtn:hover {
-    background-color: #5a5a5a;
-}
-
-#emailSetupTutorial .closeBtn:active {
-    transform: scale(0.9);
-}
-
-
-
 /* jssor slider arrow navigator skin 05 css */
 /*
 		.jssora05l                  (normal)
@@ -142,7 +37,7 @@
 
 #closeBtnHolder {
     position: absolute;
-    top: 5px;
+    top: -100px;
     right: 5px;
     width: auto;
     height: auto;
@@ -159,7 +54,7 @@
 	font-weight: bold;*/
     display: inline-flex;
     height: 40px;
-    width: 150px;
+    width: 50px;
     border: 2px solid #BFC0C0;
     margin: 10px;
     color: #BFC0C0;
@@ -222,7 +117,7 @@
     position: absolute;
     top: -300px;
     left: 0;
-    height: 300px;
+    height: 200px;
     width: 100%;
     background-color: white;
     padding: 10px 20px 20px 20px;
@@ -243,8 +138,8 @@
 }
 
 #jssor_1 {
-    height: calc(100% - 100px) !important;
-    top: 50px !important;
+    height: calc(100% - 50px) !important;
+    top: 25px !important;
 }
 
     #jssor_1.fullDesc > div {
@@ -295,10 +190,11 @@
 #slidesHolder {
     cursor: default;
     position: relative;
-    top: 0px;
+    top: -100px;
     left: 0px;
     width: 100% !important;
-    height: calc(100% - 100px);
+    /*height: calc(100% - 100px);*/
+    height: 100%;
     overflow: hidden;
     white-space: nowrap;
     text-align: center;
@@ -307,7 +203,9 @@
 
     #slidesHolder > div {
         width: 100% !important;
-        height: calc(100% - 10px) !important;
+        /*height: calc(100% - 10px) !important;*/
+        height: 100% !important;
+        top: -100px;
     }
 
 #thumbNavigator {
@@ -819,8 +717,9 @@
 		font-family: Consolas;
 	}
 
-.wrap-content.ContentLayout.ContentLayout--beta .content-primary {
-    width: 100%;
+.wrap-content.ContentLayout.ContentLayout--beta .content-primary,
+.ContentLayout--alpha .content-primary {
+	width: 100% !important;
 }
 
 #chart_div {
@@ -889,8 +788,21 @@
 
 .EntityList-item--Regular:not(.expanded),
 .EntityList-item--VauVau:not(.expanded) {
-	height: 206px;
+	height: 225px;
 }
+	.EntityList-item--Regular:not(.expanded) .entity-thumbnail,
+	.EntityList-item--VauVau:not(.expanded) .entity-thumbnail {
+		height: 210px;
+	}
+		.EntityList-item--Regular:not(.expanded) .entity-thumbnail > a.link,
+		.EntityList-item--VauVau:not(.expanded) .entity-thumbnail > a.link {
+			height: 100%;
+			padding: 20px;
+		}
+		.EntityList-item--Regular:not(.expanded) .entity-thumbnail > a.link>img,
+		.EntityList-item--VauVau:not(.expanded) .entity-thumbnail > a.link>img {
+			/*height: 100%;*/
+		}
 
 #priceHistoryText {
 	width: 40%;
@@ -1124,3 +1036,105 @@ input.invalidSetting {
     box-shadow: 0px 0px 15px red !important;
 }
 .pln{color:#000}@media screen{.str{color:#080}.kwd{color:#008}.com{color:#800}.typ{color:#606}.lit{color:#066}.pun,.opn,.clo{color:#660}.tag{color:#008}.atn{color:#606}.atv{color:#080}.dec,.var{color:#606}.fun{color:red}}@media print,projection{.str{color:#060}.kwd{color:#006;font-weight:700}.com{color:#600;font-style:italic}.typ{color:#404;font-weight:700}.lit{color:#044}.pun,.opn,.clo{color:#440}.tag{color:#006;font-weight:700}.atn{color:#404}.atv{color:#060}}pre.prettyprint{padding:2px;border:1px solid #888}ol.linenums{margin-top:0;margin-bottom:0}li.L0,li.L1,li.L2,li.L3,li.L5,li.L6,li.L7,li.L8{list-style-type:none}li.L1,li.L3,li.L5,li.L7,li.L9{background:#eee}
+#settingsModal {
+    /*position: fixed;*/
+    /*width: 200px;*/
+    /*height: 500px;*/
+    background-color: #fdcd00;
+    margin-bottom: 10px;
+    border: 1px solid white;
+    /*transition-duration: 0.5s;*/
+    /*transform: scaleX(0);*/
+    border-radius: 4px;
+    /*display: none;*/
+    height: 0;
+    overflow: hidden;
+    transition-property: height;
+    transition-duration: 0.5s;
+    position: relative;
+}
+
+#settingsModal.show {
+    display: block;
+    /*border: 1px solid white;*/
+    border: 1px solid #d0d0ce;
+    height: 305px;
+    /*transform: scaleX(1);*/
+}
+
+#settingsModal .block-standard-title {
+    background-color: black;
+    color: #d0d0ce;
+    font-weight: normal;
+    border: none !important;
+    text-shadow: none;
+    text-transform: none;
+}
+
+#settingsModal.form-standard .form-item {
+    border-top: 1px solid white !important;
+}
+
+/*.UserNav .link:focus {
+    background-color: transparent !important;
+    color: white !important;
+}*/
+
+/*.UserNav .link:active,
+.UserNav .link:focus {
+    background-color: #d6af00 !important;
+    color: black !important;
+}*/
+
+#settingsModal .form-grid {
+    float: left;
+    width: 50%;
+}
+
+#settingsModal .form-grid.fullW {
+    width: 100%;
+}
+
+#settingsModal .button-standard.active {
+    background-color: #147aa1 !important;
+    background-image: none !important;
+}
+
+#emailSetupTutorial {
+    position: fixed;
+    width: 500px;
+    height: 350px;
+    background-color: white;
+    border: 2px solid black;
+    padding: 20px;
+    left: calc(50% - 250px);
+    top: calc(50% - 175px);
+    transition-duration: 0.6s;
+    transform: scale(0);
+    opacity: 0.1;
+}
+
+#emailSetupTutorial.showing {
+    transform: scale(1);
+    opacity: 1;
+}
+
+#emailSetupTutorial .closeBtn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background-color: black;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    color: white;
+    padding: 2px 0 0 6px;
+}
+
+#emailSetupTutorial .closeBtn:hover {
+    background-color: #5a5a5a;
+}
+
+#emailSetupTutorial .closeBtn:active {
+    transform: scale(0.9);
+}

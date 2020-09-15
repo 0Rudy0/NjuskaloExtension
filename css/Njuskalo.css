@@ -29,8 +29,9 @@
 		font-family: Consolas;
 	}
 
-.wrap-content.ContentLayout.ContentLayout--beta .content-primary {
-    width: 100%;
+.wrap-content.ContentLayout.ContentLayout--beta .content-primary,
+.ContentLayout--alpha .content-primary {
+	width: 100% !important;
 }
 
 #chart_div {
@@ -99,8 +100,21 @@
 
 .EntityList-item--Regular:not(.expanded),
 .EntityList-item--VauVau:not(.expanded) {
-	height: 206px;
+	height: 225px;
 }
+	.EntityList-item--Regular:not(.expanded) .entity-thumbnail,
+	.EntityList-item--VauVau:not(.expanded) .entity-thumbnail {
+		height: 210px;
+	}
+		.EntityList-item--Regular:not(.expanded) .entity-thumbnail > a.link,
+		.EntityList-item--VauVau:not(.expanded) .entity-thumbnail > a.link {
+			height: 100%;
+			padding: 20px;
+		}
+		.EntityList-item--Regular:not(.expanded) .entity-thumbnail > a.link>img,
+		.EntityList-item--VauVau:not(.expanded) .entity-thumbnail > a.link>img {
+			/*height: 100%;*/
+		}
 
 #priceHistoryText {
 	width: 40%;

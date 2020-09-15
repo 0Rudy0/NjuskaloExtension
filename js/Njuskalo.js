@@ -1466,9 +1466,11 @@ function getImages(response) {
         }
     }
     else {
-        var items = $(response).find('.ClassifiedDetailGallery-thumbsList .ClassifiedDetailGallery-thumbsItem img')
+        var items = $(response).find('.ClassifiedDetailGallery-sliderListItem--image img')
         for (var i = 0; i < items.length; i++) {
-            var thumb = $(items[i]).attr('data-src');
+            var thumb = $(items[i]).attr('src');
+            if (thumb == null)
+                thumb = $(items[i]).attr('data-src');
             var largeImg = thumb.replace('image-80x60', 'image-w920x690');
             largeImages.push(largeImg);
             thumbs.push(thumb);

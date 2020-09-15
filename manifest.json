@@ -13,28 +13,9 @@
         "default_icon": "icons/njuskalo_thumb.png",
         "default_popup": "html/extensionPopup.html"
     },
-    "permissions": [
-        "activeTab"
-    ],
     "content_scripts": [
         {
           "matches": [
-            "https://www.njuskalo.hr/motori*",
-            "https://www.njuskalo.hr/*&categoryId=1148&*",
-            "https://www.njuskalo.hr/*&categoryId=12046&*",
-            "https://www.njuskalo.hr/sportski-motori*",
-            "https://www.njuskalo.hr/cestovni-motori*",
-            "https://www.njuskalo.hr/auti*",
-            "https://www.njuskalo.hr/rabljeni-auti*",
-            "https://www.njuskalo.hr/novi-auti*",
-            "https://www.njuskalo.hr/karambolirani-auti*",
-            "https://www.njuskalo.hr/prodaja-kuca*",
-            "https://www.njuskalo.hr/prodaja-stanova*",
-            "https://www.njuskalo.hr/nekretnine*",
-            "https://www.njuskalo.hr/novogradnja*",
-            "https://www.njuskalo.hr/*&categoryId=9580&*",
-            "https://www.njuskalo.hr/*&categoryId=9579&*",
-            "https://www.njuskalo.hr/*&categoryId=12404&*",
             "https://www.njuskalo.hr/*"
           ],
             "css": [

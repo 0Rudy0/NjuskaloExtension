@@ -37,7 +37,7 @@
 
 #closeBtnHolder {
     position: absolute;
-    top: 5px;
+    top: -100px;
     right: 5px;
     width: auto;
     height: auto;
@@ -54,7 +54,7 @@
 	font-weight: bold;*/
     display: inline-flex;
     height: 40px;
-    width: 150px;
+    width: 50px;
     border: 2px solid #BFC0C0;
     margin: 10px;
     color: #BFC0C0;
@@ -117,7 +117,7 @@
     position: absolute;
     top: -300px;
     left: 0;
-    height: 300px;
+    height: 200px;
     width: 100%;
     background-color: white;
     padding: 10px 20px 20px 20px;
@@ -138,8 +138,8 @@
 }
 
 #jssor_1 {
-    height: calc(100% - 100px) !important;
-    top: 50px !important;
+    height: calc(100% - 50px) !important;
+    top: 25px !important;
 }
 
     #jssor_1.fullDesc > div {
@@ -190,10 +190,11 @@
 #slidesHolder {
     cursor: default;
     position: relative;
-    top: 0px;
+    top: -100px;
     left: 0px;
     width: 100% !important;
-    height: calc(100% - 100px);
+    /*height: calc(100% - 100px);*/
+    height: 100%;
     overflow: hidden;
     white-space: nowrap;
     text-align: center;
@@ -202,7 +203,9 @@
 
     #slidesHolder > div {
         width: 100% !important;
-        height: calc(100% - 10px) !important;
+        /*height: calc(100% - 10px) !important;*/
+        height: 100% !important;
+        top: -100px;
     }
 
 #thumbNavigator {
