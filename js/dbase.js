@@ -34,8 +34,9 @@
 							var lastDate = historyResults.rows[0].date;
 							for (var i = 0; i < historyResults.rows.length; i++) {
 							    var row = historyResults.rows[i];
-							    if (row.date == lastDate &&
-                                    row.priceHRK == priceHRK && (priceEUR == 0 || row.priceEUR == 0 || (priceEUR > 0 && row.priceEUR == priceEUR))) {
+								if (row.date == lastDate &&
+									((priceEUR == 0 && row.priceEUR == 0 && row.priceHRK == priceHRK) ||
+									(priceEUR == row.priceEUR || row.priceHRK == priceHRK))) {
 									foundSamePrice = true;
 									break;
 								}
