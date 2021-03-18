@@ -59,7 +59,14 @@ chrome.runtime.onMessage.addListener(
           sessionStorage.setItem('actionOnDuplicate', actionOnDuplicate);
           if ($('.Pagination-item.Pagination-item--next .Pagination-link').length > 0) {
               sessionStorage.setItem('autoPaging', true);
-              $('.Pagination-item.Pagination-item--next .Pagination-link').click();
+              var elem = $('.Pagination-item.Pagination-item--next .Pagination-link')[0];
+              if (elem.nodeName == 'A') {
+                  var url = $(elem).attr('href');
+                  window.location.href = url;
+              }
+              else {
+                  $('.Pagination-item.Pagination-item--next .Pagination-link').click();
+              }
           }
           else {
               sessionStorage.removeItem('autoPaging');
