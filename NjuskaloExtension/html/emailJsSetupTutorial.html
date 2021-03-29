@@ -1,0 +1,32 @@
+﻿<div id="emailSetupTutorial">
+    <div class="closeBtn">X</div>
+    <ol>
+        <li>
+            Odi na <a href="https://dashboard.emailjs.com/" target="_blank">https://dashboard.emailjs.com/</a> i kreiraj besplatan account
+            (omogućuje slanje do 100 emaila dnevno)
+        </li>
+        <br />
+        <li>
+            Na <a href="https://dashboard.emailjs.com/account" target="_blank">ovom</a> linku pod <b>API KEYS</b> možeš vidjeti svoj <i>User ID</i>.
+            Kopiraj ga u polje "EmailJS user id" u postavkama Njuskalo ekstenzije
+        </li>
+        <br />
+        <li>
+            Na <a href="https://dashboard.emailjs.com/" target="_blank">ovom</a> linku klikni "Add new service",
+            odaberi jedan od ponuđenih (gmail najlakše), nazovi ga nekako te obavezno ga označi kao "Default" ako već nije
+        </li>
+        <br />
+        <li>
+            Na <a href="https://dashboard.emailjs.com/templates" target="_blank">ovom</a> linku klikni "Create new template", unesi proizvoljno ime i ID.
+            ID templatea je potrebno unijeti u polje "EmailJS template ID" u postavkama Njuskalo ekstenzije
+            <br />
+            <ul style="margin-left: 20px;">
+                <li>- Pod <b>Subject</b> unijeti "<code>{{subject}}</code>" (bez navodnika, sa zagradama)</li>
+                <li>- Pod <b>To email</b> unijeti "<code>{{emailTo}}</code>"</li>
+                <li>- Pod <b>Content</b> unijeti "<code>{{{message}}}</code>" (izbrisati sve ostalo)</li>
+                <li>- Ostala polja proizvoljno ispuniti ili ostaviti prazna</li>
+                <li>- Pritisnuti <b>SAVE</b></li>
+            </ul>
+        </li>
+    </ol>    
+</div>

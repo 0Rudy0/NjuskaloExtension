@@ -1,0 +1,304 @@
+﻿@import url(http://fonts.googleapis.com/css?family=Roboto:400,100,900);
+
+* {
+	box-sizing: inherit;
+	-webkit-transition-property: all;
+	transition-property: all;
+	-webkit-transition-duration: .6s;
+	transition-duration: .6s;
+	-webkit-transition-timing-function: ease;
+	transition-timing-function: ease;
+}
+
+/*html,
+body {
+  box-sizing: border-box;
+  height: 100%;
+  width: 100%;
+}*/
+
+body#extensionPopup {
+	background: #f6f6f6;
+	font-family: 'Roboto', sans-serif;
+	font-weight: 400;
+	width: 600px;
+}
+
+#extensionPopup .buttons {
+	display: table;
+	height: 100%;
+	width: 100%;
+}
+
+#extensionPopup .container {
+	display: table-cell;
+	padding: 1em;
+	text-align: center;
+	vertical-align: middle;
+}
+
+#extensionPopup h1 {
+	color: #fff;
+	font-size: 1.25em;
+	font-weight: 900;
+	margin: 0 0 2em;
+}
+
+#extensionPopup p {
+	color: black;
+	font-size: 12px;
+}
+
+	#extensionPopup p a {
+		background: rgba(255, 255, 255, 0);
+		border-bottom: 1px solid;
+		color: #000;
+		line-height: 1.4;
+		padding: .25em;
+		text-decoration: none;
+	}
+
+		#extensionPopup p a:hover {
+			background: white;
+			color: #E1332D;
+		}
+
+#extensionPopup .btn {
+	color: #fff;
+	cursor: pointer;
+	display: block;
+	font-size: 12px;
+	font-weight: 400;
+	line-height: 45px;
+	margin: 0 auto 2em;
+	margin-bottom: 0;
+	max-width: 180px;
+	position: relative;
+	text-decoration: none;
+	text-transform: uppercase;
+	vertical-align: middle;
+	width: 100%;
+}
+
+	#extensionPopup .btn:hover {
+		text-decoration: none;
+	}
+
+	#extensionPopup .btn.active {
+		color: black !important;
+	}
+
+	#extensionPopup .main .btn {
+		max-width: 240px;
+	}
+
+	#extensionPopup .action .btn {
+		display: inline-block;
+	}
+
+#extensionPopup .btn-1 {
+	background: #e02c26;
+	font-weight: 100;
+}
+
+	#extensionPopup .btn-1 svg {
+		height: 45px;
+		left: 0;
+		position: absolute;
+		top: 0;
+		width: 100%;
+	}
+
+	#extensionPopup .btn-1 rect {
+		fill: none;
+		stroke: #fff;
+		stroke-width: 2;
+		stroke-dasharray: 422, 0;
+	}
+
+	#extensionPopup .btn-1:hover {
+		background: rgba(225, 51, 45, 0);
+		font-weight: 900;
+		letter-spacing: 1px;
+	}
+
+		#extensionPopup .btn-1:hover rect {
+			stroke-width: 5;
+			stroke-dasharray: 15, 310;
+			stroke-dashoffset: 48;
+			-webkit-transition: all 1.35s cubic-bezier(0.19, 1, 0.22, 1);
+			transition: all 1.35s cubic-bezier(0.19, 1, 0.22, 1);
+		}
+
+#extensionPopup .btn-2 {
+	letter-spacing: 0;
+	color: black;
+}
+
+	#extensionPopup .btn-2:hover,
+	#extensionPopup .btn-2:active {
+		letter-spacing: 5px;
+	}
+
+	#extensionPopup .btn-2:after,
+	#extensionPopup .btn-2:before {
+		-webkit-backface-visibility: hidden;
+		backface-visibility: hidden;
+		border: 1px solid rgba(255, 255, 255, 0);
+		bottom: 0px;
+		content: " ";
+		display: block;
+		margin: 0 auto;
+		position: relative;
+		-webkit-transition: all 280ms ease-in-out;
+		transition: all 280ms ease-in-out;
+		width: 0;
+	}
+
+	#extensionPopup .btn-2:hover:after,
+	#extensionPopup .btn-2:hover:before {
+		-webkit-backface-visibility: hidden;
+		backface-visibility: hidden;
+		border-color: #a8a8a8;
+		-webkit-transition: width 350ms ease-in-out;
+		transition: width 350ms ease-in-out;
+		width: 70%;
+	}
+
+	#extensionPopup .btn-2:hover:before {
+		bottom: auto;
+		top: 0;
+		width: 70%;
+		8a8a8a
+	}
+
+#extensionPopup .btn-3 {
+	background: #dedede;
+	border: 1px solid #c0c0c0;
+	box-shadow: 0px 2px 0 #9c9c9c, 2px 4px 6px #9c9c9c;
+	font-weight: 900;
+	letter-spacing: 1px;
+	-webkit-transition: all 150ms linear;
+	transition: all 150ms linear;
+}
+
+	#extensionPopup .btn-3:hover,
+	#extensionPopup .btn-3.active {
+		background: #ccc;
+		border: 1px solid rgba(0, 0, 0, 0.05);
+		box-shadow: 1px 1px 2px rgba(255, 255, 255, 0.2);
+		text-decoration: none;
+		-webkit-transition: all 250ms linear;
+		transition: all 250ms linear;
+	}
+
+	#extensionPopup .btn-3.active {
+		text-shadow: -1px -1px 0 #fff;
+		color: #363636;
+
+	}
+
+#extensionPopup .btn-4 {
+	border: 1px solid;
+	overflow: hidden;
+	position: relative;
+}
+
+	#extensionPopup .btn-4 span {
+		z-index: 20;
+	}
+
+	#extensionPopup .btn-4:after {
+		background: #fff;
+		content: "";
+		height: 155px;
+		left: -75px;
+		opacity: .2;
+		position: absolute;
+		top: -50px;
+		-webkit-transform: rotate(35deg);
+		transform: rotate(35deg);
+		-webkit-transition: all 550ms cubic-bezier(0.19, 1, 0.22, 1);
+		transition: all 550ms cubic-bezier(0.19, 1, 0.22, 1);
+		width: 50px;
+		z-index: -10;
+	}
+
+	#extensionPopup .btn-4:hover:after {
+		left: 120%;
+		-webkit-transition: all 550ms cubic-bezier(0.19, 1, 0.22, 1);
+		transition: all 550ms cubic-bezier(0.19, 1, 0.22, 1);
+	}
+
+#extensionPopup .btn-5 {
+	border: 0 solid;
+	box-shadow: inset 0 0 20px rgba(255, 255, 255, 0);
+	outline: 1px solid;
+	outline-color: rgba(255, 255, 255, 0.5);
+	outline-offset: 0px;
+	text-shadow: none;
+	-webkit-transition: all 1250ms cubic-bezier(0.19, 1, 0.22, 1);
+	transition: all 1250ms cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+	#extensionPopup .btn-5:hover {
+		border: 1px solid;
+		box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.5), 0 0 20px rgba(255, 255, 255, 0.2);
+		outline-color: rgba(255, 255, 255, 0);
+		outline-offset: 15px;
+		text-shadow: 1px 1px 2px #427388;
+	}
+
+	@import url(https://fonts.googleapis.com/css?family=Montserrat);
+body {
+  background: #5DD39E;
+  font-family: Montserrat;
+}
+
+.center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.button {
+  display: inline-block;
+  padding: 15px;
+  margin-right: 5px;
+  height: 20px;
+  min-width: 170px;
+  background: #348AA7;
+  border: none;
+  outline: none;
+  color: white;
+  font-family: inherit;
+  font-weight: 400;
+  font-size: 15px;
+  border-radius: 3px;
+  box-shadow: 0 5px 0px #348aa7;
+  border-bottom: 2px solid #30809b;
+}
+.button:hover {
+  background: #2e7a94;
+  box-shadow: 0 4px 1px #2e7a94;
+  border-bottom: 2px solid #2a7088;
+  transition: all 0.1s ease-in;
+}
+.button:active {
+  transform: translateY(4px);
+  border-bottom-width: 2px;
+  box-shadow: none;
+}
+
+.button.scan {
+  background: #256275;
+  box-shadow: 0 5px 0px #256275;
+  border-bottom: 2px solid #215869;
+}
+
+.button.scan:hover {
+  background: #1f5262;
+  box-shadow: 0 4px 1px #1f5262;
+  border-bottom: 2px solid #1b4856;
+}
